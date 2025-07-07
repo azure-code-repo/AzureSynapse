@@ -1,0 +1,18 @@
+﻿CREATE TABLE [EDAA_REF].[DIM_ITM_INGR]
+(
+	[ITM_SK] [int] NULL,
+	[INGR_SK] [int] NULL,
+	[PROD_SK] [int] NULL,
+	[INGR_ID] [nvarchar](4000) NULL,
+	[ITM_SKU] [nvarchar](4000) NULL,
+	[UPC_TYP_NM] [nvarchar](4000) NULL,
+	[P_INGR_PER_STRT_DT] [date] NULL,
+	[P_INGR_PER_END_DT] [date] NULL,
+	[UDT_DT] [datetime2](7) NULL,
+	[UDT_BY] [nvarchar](4000) NULL
+)
+WITH
+(
+	DISTRIBUTION = ROUND_ROBIN,
+	CLUSTERED COLUMNSTORE INDEX
+)

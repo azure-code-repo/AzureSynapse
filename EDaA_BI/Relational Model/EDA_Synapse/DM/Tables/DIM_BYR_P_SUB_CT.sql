@@ -1,0 +1,26 @@
+﻿CREATE TABLE [DM].[DIM_BYR_P_SUB_CT] (
+    [BYR_HST_SKY]  INT           NOT NULL,
+    [BYR_SKY]      INT           NOT NULL,
+    [BYR_ID]       INT           NOT NULL,
+    [BYR]          VARCHAR (255) NOT NULL,
+    [P_SUB_CT_ID]  VARCHAR (10)  NOT NULL,
+    [P_SUB_CT_DSC] VARCHAR (80)  NOT NULL,
+    [GVP]          VARCHAR (255) NOT NULL,
+    [MGR]          VARCHAR (255) NOT NULL,
+    [VP]           VARCHAR (255) NOT NULL,
+    [VLD_FROM]     DATETIME      NOT NULL,
+    [VLD_TO]       DATETIME      NULL,
+    [IS_CURR]      BIT           NOT NULL,
+    [IS_DMY]       BIT           NOT NULL,
+    [IS_EMBR]      BIT           NULL,
+    [ETL_ACT]      VARCHAR (20)  NOT NULL,
+    [AUD_INS_SKY]  BIGINT        NOT NULL,
+    [AUD_UPD_SKY]  BIGINT        NULL,
+    PRIMARY KEY NONCLUSTERED ([BYR_HST_SKY] ASC) NOT ENFORCED
+)
+WITH (HEAP, DISTRIBUTION = REPLICATE);
+
+
+GO
+CREATE NONCLUSTERED INDEX [DIM_BYR_P_SUB_CT_P_SUB_CT_ID_NCIDX]
+    ON [DM].[DIM_BYR_P_SUB_CT]([P_SUB_CT_ID] ASC);

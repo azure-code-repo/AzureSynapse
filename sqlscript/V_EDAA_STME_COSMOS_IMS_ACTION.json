@@ -1,0 +1,17 @@
+{
+	"name": "V_EDAA_STME_COSMOS_IMS_ACTION",
+	"properties": {
+		"content": {
+			"query": "/****** \nObject:  View [COSMOS_STME_WRK].[V_EDAA_STME_COSMOS_IMS_ACTION]    \nScript Date: 7/6/2022 11:10:27 AM\nScript By: Prashant Tripathi\n******/\n\nuse [edaa-stme]\nGO\n\nSET ANSI_NULLS ON\nGO\n\nSET QUOTED_IDENTIFIER ON\nGO\n\ncreate OR ALTER view [COSMOS_STME_WRK].[V_EDAA_STME_COSMOS_IMS_ACTION]\nAS\nselect * from openrowset(\n\tProvider = 'CosmosDB',\n\tConnection = 'Account=cosmosdb-np-stme-ims-int;Database=IMS',\n\tObject = 'Actions',\n\tServer_Credential = 'cosmosdb-np-stme-ims-int'\n) as table1\n\nGO\n\n\n\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "master",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

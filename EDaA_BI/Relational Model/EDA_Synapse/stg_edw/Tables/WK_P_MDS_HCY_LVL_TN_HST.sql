@@ -1,0 +1,14 @@
+﻿CREATE TABLE [stg_edw].[WK_P_MDS_HCY_LVL_TN_HST] (
+    [WK_END_DT]           DATE         NOT NULL,
+    [P_MDS_HCY_LVL_ID]    VARCHAR (15) NOT NULL,
+    [UT_ID]               SMALLINT     NOT NULL,
+    [SHOP_CHNL_CT]        INT          NOT NULL,
+    [MBL_SLF_CHKOT_FLG]   CHAR (1)     NOT NULL,
+    [MPERK_TN_CT]         CHAR (1)     NOT NULL,
+    [DGTL_UT_FLG]         SMALLINT     NOT NULL,
+    [SHOP_AND_SCN_UT_FLG] SMALLINT     NOT NULL,
+    [GUEST_SRVY_POS_CNT]  INT          NOT NULL,
+    [GUEST_SRVY_RSP_CNT]  INT          NOT NULL,
+    [FNC_TN_CNT]          INT          NOT NULL
+)
+WITH (CLUSTERED COLUMNSTORE INDEX, DISTRIBUTION = ROUND_ROBIN);

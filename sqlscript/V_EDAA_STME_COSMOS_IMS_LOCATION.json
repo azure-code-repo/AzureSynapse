@@ -1,0 +1,17 @@
+{
+	"name": "V_EDAA_STME_COSMOS_IMS_LOCATION",
+	"properties": {
+		"content": {
+			"query": "/****** \nObject:  View [COSMOS_STME_WRK].[V_EDAA_STME_COSMOS_IMS_LOCATION]    \nScript Date: 7/6/2022 11:10:27 AM\nScript By: Prashant Tripathi\n******/\n\nuse [edaa-stme]\nGO\n\nSET ANSI_NULLS ON\nGO\n\nSET QUOTED_IDENTIFIER ON\nGO\n\ncreate or alter view [COSMOS_STME_WRK].[V_EDAA_STME_COSMOS_IMS_LOCATION]\nAS\nselect * from openrowset(\n\tProvider = 'CosmosDB',\n\tConnection = 'Account=cosmosdb-np-stme-ims-int;Database=IMS',\n\tObject = 'Location',\n\tServer_Credential = 'cosmosdb-np-stme-ims-int'\n) as table1\n\nGO",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "master",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

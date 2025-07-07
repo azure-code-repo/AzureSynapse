@@ -1,0 +1,28 @@
+﻿CREATE TABLE [stg_edw].[DLY_UT_P_UPC_HST] (
+    [P_UPC_ID]            DECIMAL (18)   NOT NULL,
+    [UT_ID]               SMALLINT       NOT NULL,
+    [DAY_DT]              DATE           NOT NULL,
+    [TG_SL_AM]            DECIMAL (9, 2) NOT NULL,
+    [TG_SL_QT]            INT            NOT NULL,
+    [TG_DMGN_AM]          DECIMAL (9, 2) NULL,
+    [TG_CGS_FNC_CR_AM]    DECIMAL (9, 2) NULL,
+    [TG_CGS_FNC_CHR_AM]   DECIMAL (9, 2) NULL,
+    [TG_CGS_WRHG_AM]      DECIMAL (9, 2) NULL,
+    [TG_CGS_TDC_HDL_AM]   DECIMAL (9, 2) NULL,
+    [TG_CGS_STO_HDL_AM]   DECIMAL (9, 2) NULL,
+    [TG_CGS_P_CST_AM]     DECIMAL (9, 2) NULL,
+    [TG_PTS_AM]           DECIMAL (9, 2) NULL,
+    [TG_PTS_QT]           INT            NOT NULL,
+    [TG_PTS_DMGN_AM]      DECIMAL (9, 2) NOT NULL,
+    [TG_PTS_MKDN_AM]      DECIMAL (9, 2) NOT NULL,
+    [TG_CLRN_AM]          DECIMAL (9, 2) NOT NULL,
+    [TG_CLRN_QT]          INT            NOT NULL,
+    [TG_CLRN_DMGN_AM]     DECIMAL (9, 2) NULL,
+    [TG_CLRN_MKDN_AM]     DECIMAL (9, 2) NOT NULL,
+    [TG_T_MKDN_AM]        DECIMAL (9, 2) NOT NULL,
+    [TG_SCN_QT]           INT            NOT NULL,
+    [TG_INV_QT]           INT            NOT NULL,
+    [TG_RGL_LOST_SL_QT]   DECIMAL (9, 2) NOT NULL,
+    [TG_PROMO_LOST_SL_QT] DECIMAL (9, 2) NOT NULL
+)
+WITH (CLUSTERED INDEX([P_UPC_ID], [UT_ID], [DAY_DT]), DISTRIBUTION = HASH([UT_ID]));

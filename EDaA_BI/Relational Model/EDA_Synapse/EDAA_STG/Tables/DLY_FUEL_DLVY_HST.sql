@@ -1,0 +1,15 @@
+﻿CREATE TABLE [EDAA_STG].[DLY_FUEL_DLVY_HST]
+(
+	[ENTY_NM] [varchar](10) NULL,
+	[STR_ID] [smallint] NULL,
+	[ITM_GRP_NM] [varchar](50) NULL,
+	[FUEL_CST_TYP_NM] [varchar](25) NULL,
+	[FUEL_CST_AMT] [decimal](9, 4) NULL,
+	[SRC_RW_GRTN_TMS] [datetime] NULL,
+	[RW_PRCS_ID] [varchar](25) NOT NULL
+)
+WITH
+(
+	DISTRIBUTION = ROUND_ROBIN,
+	CLUSTERED COLUMNSTORE INDEX
+);

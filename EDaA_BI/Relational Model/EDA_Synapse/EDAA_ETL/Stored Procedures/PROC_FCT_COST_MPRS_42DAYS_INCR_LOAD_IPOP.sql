@@ -1,0 +1,285 @@
+/****** Object:  StoredProcedure [EDAA_ETL].[PROC_FCT_COST_MPRS_42DAYS_INCR_LOAD_IPOP]    Script Date: 3/23/2023 6:59:39 AM ******/
+
+CREATE PROC [EDAA_ETL].[PROC_FCT_COST_MPRS_42DAYS_INCR_LOAD_IPOP] @From_DT_SK [INT],@TO_DT_SK [INT] AS
+
+BEGIN TRY
+
+  /*Variables Declaration*/
+  --DECLARE @Start_Date int
+  --DECLARE @End_Date int
+
+  DECLARE @NEW_AUD_SKY bigint
+  DECLARE @NBR_OF_RW_ISRT int
+  DECLARE @NBR_OF_RW_UDT int
+  DECLARE @EXEC_LYR varchar(255)
+  DECLARE @EXEC_JOB varchar(500)
+  DECLARE @SRC_ENTY varchar(500)
+  DECLARE @TGT_ENTY varchar(500)
+  DECLARE @ERROR_PROCEDURE_NAME AS varchar(60) = 'EDAA_ETL.PROC_FCT_COST_MPRS_42DAYS_INCR_LOAD_IPOP'
+  DECLARE @ERROR_LINE AS int
+  DECLARE @ERROR_MSG AS nvarchar(max)
+  DECLARE @SLS_DATETIME datetime
+  DECLARE @Last_Processed_Time AS datetime
+
+
+  /*Audit Log Start*/
+  EXEC EDAA_CNTL.SP_AUDIT_DATA_LOAD_START @EXEC_LYR = 'EDAA_PRES',
+                                          @EXEC_JOB = 'PROC_FCT_COST_MPRS_42DAYS_INCR_LOAD_IPOP',
+                                          @SRC_ENTY = 'FCT_PRODUCT_COST_RCV_TY_LY_FSC',
+                                          @TGT_ENTY = 'FCT_PRODUCT_MPRS_COSTRCV_TY_LY_FSC_42DAYS',
+                                          @NEW_AUD_SKY = @NEW_AUD_SKY OUTPUT;
+
+
+
+  /*IPOP Data Loading Process Script*/
+  BEGIN
+
+    /*Create Cte for Cost Recieving data for Fiscal Year LY and TY w.r.t Last 42 Date Keys*/
+    WITH combined_tables
+    AS (SELECT
+      42 AS ROW_ID_VAL,
+      1 AS CLN_TYP_ID,
+      a.DT_SK AS PRE_DEF_ID,
+	  LEFT(a.DT_SK, 4) + '-' + SUBSTRING(CAST(a.DT_SK AS varchar), 5, 2) + '-' + RIGHT(a.DT_SK, 2) AS DT_VAL,
+      a.GEO_HIST_SK,
+      a.PROD_HIST_SK,
+	  PROD.Lvl1_Prod_Id,
+      a.ITM_SKU,
+      a.MJR_PKG_UT_QTY_TY_FSC,
+      a.MJR_PKG_UT_QTY_LY_FSC,
+      a.ITM_GRSS_CST_AMT_TY_FSC,
+      a.ITM_GRSS_CST_AMT_LY_FSC,
+      a.ITM_NET_CST_AMT_TY_FSC,
+      a.ITM_NET_CST_AMT_LY_FSC,
+      a.ITM_CHRG_EA_AMT_TY_FSC,
+      a.ITM_CHRG_EA_AMT_LY_FSC,
+      a.ITM_ALW_EA_AMT_TY_FSC,
+      a.ITM_ALW_EA_AMT_LY_FSC,
+      a.PO_CHRG_EA_AMT_TY_FSC,
+      a.PO_CHRG_EA_AMT_LY_FSC,
+      a.PO_ALW_EA_AMT_TY_FSC,
+      a.PO_ALW_EA_AMT_LY_FSC,
+      a.CSH_DCT_EA_AMT_TY_FSC,
+      a.CSH_DCT_EA_AMT_LY_FSC,
+      a.FRT_CHRG_EA_AMT_TY_FSC,
+      a.FRT_CHRG_EA_AMT_LY_FSC,
+      a.FRT_ALW_EA_AMT_TY_FSC,
+      a.FRT_ALW_EA_AMT_LY_FSC,
+      a.FRT_UNLD_CHRG_AMT_TY_FSC,
+      a.FRT_UNLD_CHRG_AMT_LY_FSC,
+      a.IPT_LD_CHRG_AMT_TY_FSC,
+      a.IPT_LD_CHRG_AMT_LY_FSC,
+      a.BKH_FRT_CHRG_AMT_TY_FSC,
+      a.BKH_FRT_CHRG_AMT_LY_FSC,
+      a.EXTD_BKH_FRT_CHRG_AMT_TY_FSC,
+      a.EXTD_BKH_FRT_CHRG_AMT_LY_FSC,
+      a.CostOfGoodsReductionAmount_TY_FSC,
+      a.CostOfGoodsReductionAmount_LY_FSC,
+      a.SwellAndDefectiveAlw_TY_FSC,
+      a.SwellAndDefectiveAlw_LY_FSC
+    FROM [EDAA_PRES].[FCT_PRODUCT_COST_RCV_TY_LY_FSC] a
+	INNER JOIN EDAA_DW.DIM_PROD PROD ON a.Itm_Sku=PROD.Itm_Sku AND PROD.IS_Curr_Ind=1
+	WHERE a.DT_SK>= @From_DT_SK AND a.DT_SK<=@TO_DT_SK
+	  ),
+    /*Create Cte and Aggregate Cost Recieving data w.r.t Last 42 Date Keys*/
+    ipop_load
+    AS (SELECT
+      ROW_ID_VAL,
+      CLN_TYP_ID,
+      PRE_DEF_ID,
+      DT_VAL,
+      GEO_HIST_SK,
+	  Lvl1_Prod_Id,
+      PROD_HIST_SK,
+      ITM_SKU,
+      SUM(MJR_PKG_UT_QTY_TY_FSC) AS MJR_PKG_UT_QTY_TY_FSC,
+      SUM(MJR_PKG_UT_QTY_LY_FSC) AS MJR_PKG_UT_QTY_LY_FSC,
+      SUM(ITM_GRSS_CST_AMT_TY_FSC) AS ITM_GRSS_CST_AMT_TY_FSC,
+      SUM(ITM_GRSS_CST_AMT_LY_FSC) AS ITM_GRSS_CST_AMT_LY_FSC,
+      SUM(ITM_NET_CST_AMT_TY_FSC) AS ITM_NET_CST_AMT_TY_FSC,
+      SUM(ITM_NET_CST_AMT_LY_FSC) AS ITM_NET_CST_AMT_LY_FSC,
+      SUM(ITM_CHRG_EA_AMT_TY_FSC) AS ITM_CHRG_EA_AMT_TY_FSC,
+      SUM(ITM_CHRG_EA_AMT_LY_FSC) AS ITM_CHRG_EA_AMT_LY_FSC,
+      SUM(ITM_ALW_EA_AMT_TY_FSC) AS ITM_ALW_EA_AMT_TY_FSC,
+      SUM(ITM_ALW_EA_AMT_LY_FSC) AS ITM_ALW_EA_AMT_LY_FSC,
+      SUM(PO_CHRG_EA_AMT_TY_FSC) AS PO_CHRG_EA_AMT_TY_FSC,
+      SUM(PO_CHRG_EA_AMT_LY_FSC) AS PO_CHRG_EA_AMT_LY_FSC,
+      SUM(PO_ALW_EA_AMT_TY_FSC) AS PO_ALW_EA_AMT_TY_FSC,
+      SUM(PO_ALW_EA_AMT_LY_FSC) AS PO_ALW_EA_AMT_LY_FSC,
+      SUM(CSH_DCT_EA_AMT_TY_FSC) AS CSH_DCT_EA_AMT_TY_FSC,
+      SUM(CSH_DCT_EA_AMT_LY_FSC) AS CSH_DCT_EA_AMT_LY_FSC,
+      SUM(FRT_CHRG_EA_AMT_TY_FSC) AS FRT_CHRG_EA_AMT_TY_FSC,
+      SUM(FRT_CHRG_EA_AMT_LY_FSC) AS FRT_CHRG_EA_AMT_LY_FSC,
+      SUM(FRT_ALW_EA_AMT_TY_FSC) AS FRT_ALW_EA_AMT_TY_FSC,
+      SUM(FRT_ALW_EA_AMT_LY_FSC) AS FRT_ALW_EA_AMT_LY_FSC,
+      SUM(FRT_UNLD_CHRG_AMT_TY_FSC) AS FRT_UNLD_CHRG_AMT_TY_FSC,
+      SUM(FRT_UNLD_CHRG_AMT_LY_FSC) AS FRT_UNLD_CHRG_AMT_LY_FSC,
+      SUM(IPT_LD_CHRG_AMT_TY_FSC) AS IPT_LD_CHRG_AMT_TY_FSC,
+      SUM(IPT_LD_CHRG_AMT_LY_FSC) AS IPT_LD_CHRG_AMT_LY_FSC,
+      SUM(BKH_FRT_CHRG_AMT_TY_FSC) AS BKH_FRT_CHRG_AMT_TY_FSC,
+      SUM(BKH_FRT_CHRG_AMT_LY_FSC) AS BKH_FRT_CHRG_AMT_LY_FSC,
+      SUM(EXTD_BKH_FRT_CHRG_AMT_TY_FSC) AS EXTD_BKH_FRT_CHRG_AMT_TY_FSC,
+      SUM(EXTD_BKH_FRT_CHRG_AMT_LY_FSC) AS EXTD_BKH_FRT_CHRG_AMT_LY_FSC,
+      SUM(CostOfGoodsReductionAmount_TY_FSC) AS CostOfGoodsReductionAmount_TY_FSC,
+      SUM(CostOfGoodsReductionAmount_LY_FSC) AS CostOfGoodsReductionAmount_LY_FSC,
+      SUM(SwellAndDefectiveAlw_TY_FSC) AS SwellAndDefectiveAlw_TY_FSC,
+      SUM(SwellAndDefectiveAlw_LY_FSC) AS SwellAndDefectiveAlw_LY_FSC
+    FROM combined_tables
+    GROUP BY ROW_ID_VAL,
+             CLN_TYP_ID,
+             PRE_DEF_ID,
+             DT_VAL,
+             GEO_HIST_SK,
+			 Lvl1_Prod_Id,
+             PROD_HIST_SK,
+             ITM_SKU)
+
+    /* IPOP Data Loading Code Snippet into Target Table Final Select Query For IPOP Data Loading*/
+	INSERT INTO EDAA_PRES.FCT_PRODUCT_MPRS_COSTRCV_TY_LY_FSC_42DAYS (ROW_ID_VAL, CLN_TYP_ID, PRE_DEF_ID, DT_VAL, GEO_HIST_SK, PROD_HIST_SK, ITM_SKU, MJR_PKG_UT_QTY_TY_FSC, MJR_PKG_UT_QTY_LY_FSC, ITM_GRSS_CST_AMT_TY_FSC, ITM_GRSS_CST_AMT_LY_FSC, ITM_NET_CST_AMT_TY_FSC, ITM_NET_CST_AMT_LY_FSC, ITM_CHRG_EA_AMT_TY_FSC, ITM_CHRG_EA_AMT_LY_FSC, ITM_ALW_EA_AMT_TY_FSC, ITM_ALW_EA_AMT_LY_FSC, PO_CHRG_EA_AMT_TY_FSC, PO_CHRG_EA_AMT_LY_FSC, PO_ALW_EA_AMT_TY_FSC, PO_ALW_EA_AMT_LY_FSC, CSH_DCT_EA_AMT_TY_FSC, CSH_DCT_EA_AMT_LY_FSC, FRT_CHRG_EA_AMT_TY_FSC, FRT_CHRG_EA_AMT_LY_FSC, FRT_ALW_EA_AMT_TY_FSC, FRT_ALW_EA_AMT_LY_FSC, FRT_UNLD_CHRG_AMT_TY_FSC, FRT_UNLD_CHRG_AMT_LY_FSC, IPT_LD_CHRG_AMT_TY_FSC, IPT_LD_CHRG_AMT_LY_FSC, BKH_FRT_CHRG_AMT_TY_FSC, BKH_FRT_CHRG_AMT_LY_FSC, EXTD_BKH_FRT_CHRG_AMT_TY_FSC, EXTD_BKH_FRT_CHRG_AMT_LY_FSC, CostOfGoodsReductionAmount_TY_FSC, CostOfGoodsReductionAmount_LY_FSC, SwellAndDefectiveAlw_TY_FSC, SwellAndDefectiveAlw_LY_FSC, CREATE_DATE, UPDATE_DATE)
+    SELECT
+		ipop.ROW_ID_VAL,
+		ipop.CLN_TYP_ID,
+		ipop.PRE_DEF_ID,
+		ipop.DT_VAL,
+		ipop.GEO_HIST_SK,
+		ipop.PROD_HIST_SK,
+		ipop.ITM_SKU,
+		ipop.MJR_PKG_UT_QTY_TY_FSC,
+		ipop.MJR_PKG_UT_QTY_LY_FSC,
+		ipop.ITM_GRSS_CST_AMT_TY_FSC,
+		ipop.ITM_GRSS_CST_AMT_LY_FSC,
+		ipop.ITM_NET_CST_AMT_TY_FSC,
+		ipop.ITM_NET_CST_AMT_LY_FSC,
+		ipop.ITM_CHRG_EA_AMT_TY_FSC,
+		ipop.ITM_CHRG_EA_AMT_LY_FSC,
+		ipop.ITM_ALW_EA_AMT_TY_FSC,
+		ipop.ITM_ALW_EA_AMT_LY_FSC,
+		ipop.PO_CHRG_EA_AMT_TY_FSC,
+		ipop.PO_CHRG_EA_AMT_LY_FSC,
+		ipop.PO_ALW_EA_AMT_TY_FSC,
+		ipop.PO_ALW_EA_AMT_LY_FSC,
+		ipop.CSH_DCT_EA_AMT_TY_FSC,
+		ipop.CSH_DCT_EA_AMT_LY_FSC,
+		ipop.FRT_CHRG_EA_AMT_TY_FSC,
+		ipop.FRT_CHRG_EA_AMT_LY_FSC,
+		ipop.FRT_ALW_EA_AMT_TY_FSC,
+		ipop.FRT_ALW_EA_AMT_LY_FSC,
+		ipop.FRT_UNLD_CHRG_AMT_TY_FSC,
+		ipop.FRT_UNLD_CHRG_AMT_LY_FSC,
+		ipop.IPT_LD_CHRG_AMT_TY_FSC,
+		ipop.IPT_LD_CHRG_AMT_LY_FSC,
+		ipop.BKH_FRT_CHRG_AMT_TY_FSC,
+		ipop.BKH_FRT_CHRG_AMT_LY_FSC,
+		ipop.EXTD_BKH_FRT_CHRG_AMT_TY_FSC,
+		ipop.EXTD_BKH_FRT_CHRG_AMT_LY_FSC,
+		ipop.CostOfGoodsReductionAmount_TY_FSC,
+		ipop.CostOfGoodsReductionAmount_LY_FSC,
+		ipop.SwellAndDefectiveAlw_TY_FSC,
+		ipop.SwellAndDefectiveAlw_LY_FSC,
+		GETDATE(),
+		GETDATE()
+	FROM
+	ipop_load ipop
+	INNER JOIN (select * from EDAA_DW.DIM_PROD where IS_Curr_Ind=1) PROD
+		ON ipop.Lvl1_Prod_Id=PROD.Lvl1_Prod_Id AND ipop.ITM_SKU=PROD.ITM_SKU
+	WHERE ipop.ROW_ID_VAL IS NOT NULL
+	UNION
+	SELECT
+		ipop.ROW_ID_VAL,
+		ipop.CLN_TYP_ID,
+		ipop.PRE_DEF_ID,
+		ipop.DT_VAL,
+		ipop.GEO_HIST_SK,
+		PROD.PROD_HIST_SK,
+		PROD.ITM_SKU,
+		AVG(ipop.MJR_PKG_UT_QTY_TY_FSC) AS MJR_PKG_UT_QTY_TY_FSC,
+		AVG(ipop.MJR_PKG_UT_QTY_LY_FSC) AS MJR_PKG_UT_QTY_LY_FSC,
+		AVG(ipop.ITM_GRSS_CST_AMT_TY_FSC) AS ITM_GRSS_CST_AMT_TY_FSC,
+		AVG(ipop.ITM_GRSS_CST_AMT_LY_FSC) AS ITM_GRSS_CST_AMT_LY_FSC,
+		AVG(ipop.ITM_NET_CST_AMT_TY_FSC) AS ITM_NET_CST_AMT_TY_FSC,
+		AVG(ipop.ITM_NET_CST_AMT_LY_FSC) AS ITM_NET_CST_AMT_LY_FSC,
+		AVG(ipop.ITM_CHRG_EA_AMT_TY_FSC) AS ITM_CHRG_EA_AMT_TY_FSC,
+		AVG(ipop.ITM_CHRG_EA_AMT_LY_FSC) AS ITM_CHRG_EA_AMT_LY_FSC,
+		AVG(ipop.ITM_ALW_EA_AMT_TY_FSC) AS ITM_ALW_EA_AMT_TY_FSC,
+		AVG(ipop.ITM_ALW_EA_AMT_LY_FSC) AS ITM_ALW_EA_AMT_LY_FSC,
+		AVG(ipop.PO_CHRG_EA_AMT_TY_FSC) AS PO_CHRG_EA_AMT_TY_FSC,
+		AVG(ipop.PO_CHRG_EA_AMT_LY_FSC) AS PO_CHRG_EA_AMT_LY_FSC,
+		AVG(ipop.PO_ALW_EA_AMT_TY_FSC) AS PO_ALW_EA_AMT_TY_FSC,
+		AVG(ipop.PO_ALW_EA_AMT_LY_FSC) AS PO_ALW_EA_AMT_LY_FSC,
+		AVG(ipop.CSH_DCT_EA_AMT_TY_FSC) AS CSH_DCT_EA_AMT_TY_FSC,
+		AVG(ipop.CSH_DCT_EA_AMT_LY_FSC) AS CSH_DCT_EA_AMT_LY_FSC,
+		AVG(ipop.FRT_CHRG_EA_AMT_TY_FSC) AS FRT_CHRG_EA_AMT_TY_FSC,
+		AVG(ipop.FRT_CHRG_EA_AMT_LY_FSC) AS FRT_CHRG_EA_AMT_LY_FSC,
+		AVG(ipop.FRT_ALW_EA_AMT_TY_FSC) AS FRT_ALW_EA_AMT_TY_FSC,
+		AVG(ipop.FRT_ALW_EA_AMT_LY_FSC) AS FRT_ALW_EA_AMT_LY_FSC,
+		AVG(ipop.FRT_UNLD_CHRG_AMT_TY_FSC) AS FRT_UNLD_CHRG_AMT_TY_FSC,
+		AVG(ipop.FRT_UNLD_CHRG_AMT_LY_FSC) AS FRT_UNLD_CHRG_AMT_LY_FSC,
+		AVG(ipop.IPT_LD_CHRG_AMT_TY_FSC) AS IPT_LD_CHRG_AMT_TY_FSC,
+		AVG(ipop.IPT_LD_CHRG_AMT_LY_FSC) AS IPT_LD_CHRG_AMT_LY_FSC,
+		AVG(ipop.BKH_FRT_CHRG_AMT_TY_FSC) AS BKH_FRT_CHRG_AMT_TY_FSC,
+		AVG(ipop.BKH_FRT_CHRG_AMT_LY_FSC) AS BKH_FRT_CHRG_AMT_LY_FSC,
+		AVG(ipop.EXTD_BKH_FRT_CHRG_AMT_TY_FSC) AS EXTD_BKH_FRT_CHRG_AMT_TY_FSC,
+		AVG(ipop.EXTD_BKH_FRT_CHRG_AMT_LY_FSC) AS EXTD_BKH_FRT_CHRG_AMT_LY_FSC,
+		AVG(ipop.CostOfGoodsReductionAmount_TY_FSC) AS CostOfGoodsReductionAmount_TY_FSC,
+		AVG(ipop.CostOfGoodsReductionAmount_LY_FSC) AS CostOfGoodsReductionAmount_LY_FSC,
+		AVG(ipop.SwellAndDefectiveAlw_TY_FSC) AS SwellAndDefectiveAlw_TY_FSC,
+		AVG(ipop.SwellAndDefectiveAlw_LY_FSC) AS SwellAndDefectiveAlw_LY_FSC,
+		GETDATE(),
+		GETDATE()
+	FROM
+	(SELECT * FROM EDAA_DW.DIM_PROD WHERE IS_Curr_Ind=1) PROD
+	INNER JOIN (SELECT DISTINCT Lvl1_Prod_Id FROM ipop_load) T1 ON PROD.Lvl1_Prod_Id = T1.Lvl1_Prod_Id
+	LEFT JOIN ipop_load IPOP ON T1.Lvl1_Prod_Id = IPOP.Lvl1_Prod_Id and PROD.ITM_SKU = IPOP.ITM_SKU
+	WHERE IPOP.ITM_SKU IS NULL AND IPOP.ROW_ID_VAL IS NOT NULL
+	GROUP BY
+		ipop.ROW_ID_VAL,
+		ipop.CLN_TYP_ID,
+		ipop.PRE_DEF_ID,
+		ipop.DT_VAL,
+		ipop.GEO_HIST_SK,
+		PROD.Lvl1_Prod_Id,
+		PROD.PROD_HIST_SK,
+		PROD.ITM_SKU
+  END
+
+	  -- ;
+    -- with delete_duplicate_cte
+		-- AS
+		-- (
+		-- SELECT Prod_Hist_Sk,
+		--     Geo_hist_sk,
+		--     Itm_sku,
+		--     pre_def_id,
+		-- 	row_number() over (partition by Prod_Hist_Sk,
+		--     Geo_hist_sk,
+		--     Itm_sku,
+		--     pre_def_id
+		-- 	order by update_date desc
+		-- 	) as rn from EDAA_PRES.FCT_PRODUCT_MPRS_COSTRCV_TY_LY_FSC_42DAYS)
+		-- delete from delete_duplicate_cte where rn >1
+
+  /* Update Statistics to prepare an optimized and cost-effective execution plan.*/
+  UPDATE STATISTICS [EDAA_PRES].[FCT_PRODUCT_MPRS_COSTRCV_TY_LY_FSC_42DAYS];
+
+END TRY
+
+BEGIN CATCH
+
+  /*Error Handling and Captured Records in Error Tables*/
+  EXEC EDAA_CNTL.SP_AUDIT_DATA_LOAD_END @AUD_SKY = @NEW_AUD_SKY,
+                                        @NBR_OF_RW_ISRT = 0,
+                                        @NBR_OF_RW_UDT = 0
+  SET @ERROR_PROCEDURE_NAME = '[EDAA_ETL].[PROC_FCT_COST_MPRS_42DAYS_INCR_LOAD_IPOP]'
+  SELECT
+    @ERROR_LINE = ERROR_NUMBER(),
+    @ERROR_MSG = ERROR_MESSAGE();
+
+  --------- Log execution error ----------
+  EXEC EDAA_CNTL.SP_LOG_AUD_ERR @AUD_SKY = @NEW_AUD_SKY,
+                                @ERROR_PROCEDURE_NAME = @ERROR_PROCEDURE_NAME,
+                                @ERROR_LINE = @ERROR_LINE,
+                                @ERROR_MSG = @ERROR_MSG;
+
+  THROW;
+
+END CATCH

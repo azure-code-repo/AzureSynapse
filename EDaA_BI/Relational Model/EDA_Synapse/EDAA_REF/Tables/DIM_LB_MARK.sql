@@ -1,0 +1,14 @@
+﻿CREATE TABLE [EDAA_REF].[DIM_LB_MARK]
+(
+	[LB_MARK_ID] [int] NULL,
+	[LB_MARK_NM] [nvarchar](4000) NULL,
+	[LB_MARK_DSC] [nvarchar](4000) NULL,
+	[LB_MARK_IMG] [nvarchar](4000) NULL,
+	[UDT_DT] [datetime2](7) NULL,
+	[UDT_BY] [nvarchar](4000) NULL
+)
+WITH
+(
+	DISTRIBUTION = ROUND_ROBIN,
+	CLUSTERED COLUMNSTORE INDEX
+)

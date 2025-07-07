@@ -1,0 +1,18 @@
+{
+  "createOrReplace": {
+    "object": {
+      "database": "Performance Brief Daily",
+      "role": "Daily Perf Brief Read Process"
+    },
+    "role": {
+      "name": "Daily Perf Brief Read Process",
+      "modelPermission": "readRefresh",
+      "members": [
+        {
+          "memberName": "",
+          "identityProvider": "AzureAD"
+        }
+      ]
+    }
+  }
+}

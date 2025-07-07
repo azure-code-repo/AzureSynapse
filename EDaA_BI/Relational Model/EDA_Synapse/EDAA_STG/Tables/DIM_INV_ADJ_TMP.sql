@@ -1,0 +1,12 @@
+﻿CREATE TABLE [EDAA_STG].[DIM_INV_ADJ_TMP]
+(
+	[ADJ_TYP] [nvarchar](3) NULL,
+	[TN_TYP] [smallint] NULL,
+	[INV_ADJ_DSC] [nvarchar](40) NULL,
+	[TB_JN_CLMN_ID] [smallint] NULL
+)
+WITH
+(
+	DISTRIBUTION = ROUND_ROBIN,
+	CLUSTERED COLUMNSTORE INDEX
+);

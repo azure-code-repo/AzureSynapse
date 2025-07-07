@@ -1,0 +1,7 @@
+CREATE TABLE [stg].[DLY_UT_P_UPC_HST_INV_HST] (
+    [UT_ID]     INT          NULL,
+    [P_UPC_ID]  VARCHAR (18) NULL,
+    [DAY_DT]    VARCHAR (8)  NULL,
+    [TG_INV_QT] INT          NULL
+)
+WITH (HEAP, DISTRIBUTION = ROUND_ROBIN);

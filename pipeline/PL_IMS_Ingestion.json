@@ -1,0 +1,197 @@
+{
+	"name": "PL_IMS_Ingestion",
+	"properties": {
+		"activities": [
+			{
+				"name": "Copy data1",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlServerSource",
+						"sqlReaderQuery": {
+							"value": "select @{pipeline().parameters.QueryPattern} from @{pipeline().parameters.ViewName}",
+							"type": "Expression"
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "JsonSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "JsonWriteSettings"
+						}
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_SQLPool_Cosmos",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DS_JSON_Action",
+						"type": "DatasetReference",
+						"parameters": {
+							"collection": "@pipeline().parameters.p_SourceTableName",
+							"fileName": {
+								"value": "@pipeline().parameters.fileName",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "Get_Raw_Count",
+				"type": "DatabricksNotebook",
+				"dependsOn": [
+					{
+						"activity": "Copy data1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebookPath": "/Published_Product/ProductAPI/GRC/OSA/Raw_file_count_OSA_IMS",
+					"baseParameters": {
+						"fileName": {
+							"value": "@pipeline().parameters.fileName",
+							"type": "Expression"
+						},
+						"folderName": {
+							"value": "@concat('Year=',formatDateTime(utcnow(),'yyyy'),'/','Month=',formatDateTime(utcnow(),'MM'),'/','Day=',formatDateTime(utcnow(),'dd'))",
+							"type": "Expression"
+						},
+						"domain": {
+							"value": "@pipeline().parameters.Domain",
+							"type": "Expression"
+						},
+						"sourceSystem": {
+							"value": "@pipeline().parameters.p_SourceSystem",
+							"type": "Expression"
+						},
+						"tableName": {
+							"value": "@pipeline().parameters.p_SourceTableName",
+							"type": "Expression"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_AzureDatabricks1",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "getRawFiles",
+				"type": "DatabricksNotebook",
+				"dependsOn": [
+					{
+						"activity": "Get_Raw_Count",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebookPath": "/Published/DATA/CLEANSE/getRawFiles",
+					"baseParameters": {
+						"tableName": {
+							"value": "@pipeline().parameters.p_SourceTableName",
+							"type": "Expression"
+						},
+						"fileName": {
+							"value": "@pipeline().parameters.fileName",
+							"type": "Expression"
+						},
+						"filePath": {
+							"value": "@concat('data/',pipeline().parameters.Domain,'/',pipeline().parameters.p_SourceSystem,'/',pipeline().parameters.p_SourceTableName,'/',pipeline().parameters.folderName,'/')",
+							"type": "Expression"
+						},
+						"sourceSystem": {
+							"value": "@pipeline().parameters.p_SourceSystem",
+							"type": "Expression"
+						},
+						"domain": {
+							"value": "@pipeline().parameters.Domain",
+							"type": "Expression"
+						},
+						"Watermark_Value": {
+							"value": "@utcnow()",
+							"type": "Expression"
+						},
+						"timestampIngested": {
+							"value": "@utcnow()",
+							"type": "Expression"
+						},
+						"rowsCopied": {
+							"value": "@{activity('Get_Raw_Count').output.runOutput.count}",
+							"type": "Expression"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_AzureDatabricks1",
+					"type": "LinkedServiceReference"
+				}
+			}
+		],
+		"parameters": {
+			"p_SourceTableName": {
+				"type": "string"
+			},
+			"p_SourceSystem": {
+				"type": "string"
+			},
+			"ViewName": {
+				"type": "string"
+			},
+			"QueryPattern": {
+				"type": "string"
+			},
+			"Domain": {
+				"type": "string"
+			},
+			"folderName": {
+				"type": "string"
+			},
+			"fileName": {
+				"type": "string"
+			},
+			"DatabaseName": {
+				"type": "string"
+			}
+		},
+		"annotations": []
+	}
+}

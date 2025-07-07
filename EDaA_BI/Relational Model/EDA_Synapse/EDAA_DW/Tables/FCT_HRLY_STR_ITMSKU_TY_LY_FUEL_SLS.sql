@@ -1,0 +1,16 @@
+﻿CREATE TABLE [EDAA_DW].[FCT_HRLY_STR_ITMSKU_TY_LY_FUEL_SLS]
+(
+	[DT_SK] [int] NOT NULL,
+	[ITM_SKU] [decimal](18, 0) NOT NULL,
+	[STR_ID] [int] NOT NULL,
+	[SLS_AMT] [decimal](11, 2) NULL,
+	[SLS_QTY] [decimal](9, 0) NULL,
+	[PRM_TO_SLS_DRCT_MGN_AMT] [decimal](11, 4) NULL,
+	[AUD_INS_SK] [bigint] NULL,
+	[AUD_UPD_SK] [bigint] NULL
+)
+WITH
+(
+	DISTRIBUTION = ROUND_ROBIN,
+	CLUSTERED COLUMNSTORE INDEX
+)

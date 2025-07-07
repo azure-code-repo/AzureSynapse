@@ -1,0 +1,27 @@
+/****** Object:  Table [stg_edw].[WK_P_MDS_HCY_LVL_TN_HST]    Script Date: 9/9/2020 3:20:21 AM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE TABLE [stg_edw].[WK_P_MDS_HCY_LVL_TN_HST]
+(
+	[WK_END_DT] [date] NOT NULL,
+	[P_MDS_HCY_LVL_ID] [varchar](15) NOT NULL,
+	[UT_ID] [smallint] NOT NULL,
+	[SHOP_CHNL_CT] [int] NOT NULL,
+	[MBL_SLF_CHKOT_FLG] [char](1) NOT NULL,
+	[MPERK_TN_CT] [char](1) NOT NULL,
+	[DGTL_UT_FLG] [smallint] NOT NULL,
+	[SHOP_AND_SCN_UT_FLG] [smallint] NOT NULL,
+	[GUEST_SRVY_POS_CNT] [int] NOT NULL,
+	[GUEST_SRVY_RSP_CNT] [int] NOT NULL,
+	[FNC_TN_CNT] [int] NOT NULL
+)
+WITH
+(
+	DISTRIBUTION = ROUND_ROBIN,
+	CLUSTERED COLUMNSTORE INDEX
+)
+GO

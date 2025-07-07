@@ -1,0 +1,13 @@
+﻿CREATE TABLE [EDAA_STG_CUST].[SRVY_QN_RSP]
+(
+    [SRVY_ID] [bigint] NOT NULL,
+    [QN_ID] [int] NOT NULL,
+    [QN_RSP_VAL] [varchar](500) NOT NULL,
+    [UDT_TMS] [datetime] NOT NULL,
+    [UDT_BY] [varchar](64) NOT NULL
+)
+WITH
+(
+    DISTRIBUTION = ROUND_ROBIN,
+    CLUSTERED COLUMNSTORE INDEX
+)

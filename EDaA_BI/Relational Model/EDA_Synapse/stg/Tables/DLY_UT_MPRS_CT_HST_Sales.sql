@@ -1,0 +1,27 @@
+﻿CREATE TABLE [stg].[DLY_UT_MPRS_CT_HST_Sales] (
+    [P_UPC_ID]          NVARCHAR (4000) NULL,
+    [UT_ID]             SMALLINT        NOT NULL,
+    [MPRS_CATG_ID]      SMALLINT        NOT NULL,
+    [PKY_ID]            SMALLINT        NOT NULL,
+    [DAY_DT]            NVARCHAR (4000) NOT NULL,
+    [TG_SL_AM]          DECIMAL (11, 2) NOT NULL,
+    [TG_SL_QT]          INT             NOT NULL,
+    [TG_DMGN_AM]        DECIMAL (11, 2) NOT NULL,
+    [TG_CGS_FNC_CR_AM]  DECIMAL (9, 2)  NOT NULL,
+    [TG_CGS_FNC_CHR_AM] DECIMAL (9, 2)  NOT NULL,
+    [TG_CGS_WRHG_AM]    DECIMAL (9, 2)  NOT NULL,
+    [TG_CGS_TDC_HDL_AM] DECIMAL (9, 2)  NOT NULL,
+    [TG_CGS_STO_HDL_AM] DECIMAL (9, 2)  NOT NULL,
+    [TG_CGS_P_CST_AM]   DECIMAL (9, 2)  NOT NULL,
+    [TG_PTS_AM]         DECIMAL (9, 2)  NOT NULL,
+    [TG_PTS_QT]         INT             NOT NULL,
+    [TG_PTS_DMGN_AM]    DECIMAL (9, 2)  NOT NULL,
+    [TG_PTS_MKDN_AM]    DECIMAL (9, 2)  NOT NULL,
+    [TG_CLRN_AM]        DECIMAL (9, 2)  NOT NULL,
+    [TG_CLRN_QT]        INT             NOT NULL,
+    [TG_CLRN_DMGN_AM]   DECIMAL (9, 2)  NOT NULL,
+    [TG_CLRN_MKDN_AM]   DECIMAL (9, 2)  NOT NULL,
+    [TG_T_MKDN_AM]      DECIMAL (9, 2)  NOT NULL,
+    [TG_SCN_QT]         INT             NOT NULL
+)
+WITH (CLUSTERED COLUMNSTORE INDEX, DISTRIBUTION = ROUND_ROBIN);

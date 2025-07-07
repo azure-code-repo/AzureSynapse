@@ -1,0 +1,32 @@
+﻿CREATE TABLE [EDAA_STG].[FCT_RTL_DLY_SL_P_SUB_CT_TY_LY_TEMP]
+(
+	[GEO_HST_SKY] [int] NOT NULL,
+	[GEO_SKY] [int] NOT NULL,
+	[TM_SKY] [int] NOT NULL,
+	[P_HST_SKY] [int] NOT NULL,
+	[P_SKY] [int] NOT NULL,
+	[BYR_HST_SKY] [int] NOT NULL,
+	[BYR_SKY] [int] NOT NULL,
+	[UT_ID] [smallint] NOT NULL,
+	[SLS_FNC_AM] [decimal](11, 2) NULL,
+	[SLS_FNC_QTY] [int] NULL,
+	[DM_FNC_AM] [decimal](11, 2) NULL,
+	[SLS_FNC_SCN_QTY] [int] NULL,
+	[SLS_FNC_AM_LY_CLDR] [decimal](11, 2) NULL,
+	[SLS_FNC_QTY_LY_CLDR] [int] NULL,
+	[DM_FNC_AM_LY_CLDR] [decimal](11, 2) NULL,
+	[SLS_FNC_SCN_QTY_LY_CLDR] [int] NULL,
+	[SLS_FNC_AM_LY_FSC] [decimal](11, 2) NULL,
+	[SLS_FNC_QTY_LY_FSC] [int] NULL,
+	[DM_FNC_AM_LY_FSC] [decimal](11, 2) NULL,
+	[SLS_FNC_SCN_QTY_LY_FSC] [int] NULL,
+	[SLS_FNC_AM_LY_HLDY] [decimal](11, 2) NULL,
+	[SLS_FNC_QTY_LY_HLDY] [int] NULL,
+	[DM_FNC_AM_LY_HLDY] [decimal](11, 2) NULL,
+	[SLS_FNC_SCN_QTY_LY_HLDY] [int] NULL
+)
+WITH
+(
+	DISTRIBUTION = ROUND_ROBIN,
+	CLUSTERED COLUMNSTORE INDEX
+)

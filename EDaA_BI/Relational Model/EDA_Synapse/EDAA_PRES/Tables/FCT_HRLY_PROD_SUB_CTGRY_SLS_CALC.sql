@@ -1,0 +1,28 @@
+﻿CREATE TABLE [EDAA_PRES].[FCT_HRLY_PROD_SUB_CTGRY_SLS_CALC] (
+    [Geo_Hist_Sk]                         INT             NOT NULL,
+    [Byr_L3_Hist_Sk]                      INT             NOT NULL,
+    [Lvl3_Prod_Sub_Ctgry_Id]              VARCHAR (10)    NOT NULL,
+    [Dt_Tm_Hr]                            DATETIME        NOT NULL,
+    [Byr_L3_Sk]                           INT             NULL,
+    [Geo_Sk]                              INT             NULL,
+    [Str_Id]                              INT             NOT NULL,
+    [Sls_Amt]                             DECIMAL (11, 2) NULL,
+    [Prm_To_Sls_Amt]                      DECIMAL (11, 2) NULL,
+    [Prm_To_Prm_Drct_Mgn_Amt]             DECIMAL (11, 4) NULL,
+    [Sls_Qty]                             DECIMAL (9)     NULL,
+    [Mprk_Sls_Amt]                        DECIMAL (11, 2) NULL,
+    [Mprk_Prm_To_Sls_Amt]                 DECIMAL (11, 2) NULL,
+    [Mprk_Prm_To_Prm_Drct_Mgn_Amt]        DECIMAL (11, 4) NULL,
+    [Lst_Yr_Fsc_Sls_Amt]                  DECIMAL (11, 2) NULL,
+    [Lst_Yr_Fsc_Prm_To_Prm_Drct_Mgn_Amt]  DECIMAL (18, 4) NULL,
+    [Lst_Yr_Fsc_Sls_Qty]                  DECIMAL (9)     NULL,
+    [Lst_Yr_Fsc_Prm_To_Sls_Amt]           DECIMAL (11, 2) NULL,
+    [Lst_Yr_Hldy_Sls_Amt]                 DECIMAL (18, 4) NULL,
+    [Lst_Yr_Hldy_Prm_To_Prm_Drct_Mgn_Amt] DECIMAL (18, 4) NULL,
+    [Lst_Yr_Hldy_Sls_Qty]                 DECIMAL (18, 4) NULL,
+    [Lst_Yr_Hldy_Prm_To_Sls_Amt]          DECIMAL (11, 2) NULL,
+    [Pln_Sls_Amt]                         DECIMAL (11, 2) NULL,
+    [Aud_Ins_Sk]                          BIGINT          NULL,
+    [Aud_Upd_Sk]                          BIGINT          NULL
+)
+WITH (CLUSTERED COLUMNSTORE INDEX, DISTRIBUTION = ROUND_ROBIN);

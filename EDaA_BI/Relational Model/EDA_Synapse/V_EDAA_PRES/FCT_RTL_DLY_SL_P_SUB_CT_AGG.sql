@@ -1,0 +1,51 @@
+﻿CREATE VIEW [V_EDAA_PRES].[FCT_RTL_DLY_SL_P_SUB_CT_AGG]
+AS SELECT dtsel.ROW_ID_VAL,
+       dtsel.PRE_DEF_ID,
+       CONVERT(date, CONVERT(varchar(10), dtsel.MAX_DT_SK, 120)) AS DT_VAL,
+       GEO_HST_SKY,
+       GEO_SKY,
+       BYR_HST_SKY,
+       BYR_SKY,
+       P_HST_SKY,
+       P_SKY,
+       UT_ID,
+       SUM(SLS_FNC_AM) AS SLS_FNC_AM,
+       SUM(SLS_FNC_QTY) AS SLS_FNC_QTY,
+       SUM(DM_FNC_AM) AS DM_FNC_AM,
+       SUM(SLS_FNC_SCN_QTY) AS SLS_FNC_SCN_QTY,
+       SUM(SLS_FNC_AM_LY_CAL) AS SLS_FNC_AM_LY_CAL,
+       SUM(SLS_FNC_QTY_LY_CAL) AS SLS_FNC_QTY_LY_CAL,
+       SUM(DM_FNC_AM_LY_CAL) AS DM_FNC_AM_LY_CAL,
+       SUM(SLS_FNC_SCN_QTY_LY_CAL) AS SLS_FNC_SCN_QTY_LY_CAL,
+       SUM(SLS_FNC_AM_LY_FSC) AS SLS_FNC_AM_LY_FSC,
+       SUM(SLS_FNC_QTY_LY_FSC) AS SLS_FNC_QTY_LY_FSC,
+       SUM(DM_FNC_AM_LY_FSC) AS DM_FNC_AM_LY_FSC,
+       SUM(SLS_FNC_SCN_QTY_LY_FSC) AS SLS_FNC_SCN_QTY_LY_FSC,
+       SUM(SLS_FNC_AM_LY_HLDY) AS SLS_FNC_AM_LY_HLDY,
+       SUM(SLS_FNC_QTY_LY_HLDY) AS SLS_FNC_QTY_LY_HLDY,
+       SUM(DM_FNC_AM_LY_HLDY) AS DM_FNC_AM_LY_HLDY,
+       SUM(SLS_FNC_SCN_QTY_LY_HLDY) AS SLS_FNC_SCN_QTY_LY_HLDY
+FROM [EDAA_PRES].[FCT_RTL_DLY_SL_P_SUB_CT_TY_LY] AS a WITH (NOLOCK)
+    INNER JOIN
+    (
+        SELECT PRE_DEF_NM,
+               PRE_DEF_ID,
+               AGG_TYPE,
+               MIN_DT_SK,
+               MAX_DT_SK,
+               ROW_NUMBER() OVER (ORDER BY PRE_DEF_ID) AS ROW_ID_VAL
+        FROM [V_EDAA_PRES].[DIM_PRE_DEF_DATE]
+        WHERE AGG_TYPE = 'AGG'
+    ) dtsel
+        ON a.DT_SK >= dtsel.MIN_DT_SK
+           AND a.DT_SK <= dtsel.MAX_DT_SK
+GROUP BY dtsel.ROW_ID_VAL,
+         dtsel.PRE_DEF_ID,
+         CONVERT(date, CONVERT(varchar(10), dtsel.MAX_DT_SK, 120)),
+         GEO_HST_SKY,
+         GEO_SKY,
+         BYR_HST_SKY,
+         BYR_SKY,
+         P_HST_SKY,
+         P_SKY,
+         UT_ID;

@@ -1,0 +1,2 @@
+﻿CREATE SCHEMA [dm_edw]
+    AUTHORIZATION [dbo];

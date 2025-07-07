@@ -1,0 +1,20 @@
+﻿CREATE TABLE [EDAA_DW].[FCT_DLY_TL_FUEL_PKP]
+(
+[ENTY_NM][varchar](10) NOT NULL,
+[TL_NM][varchar](50) NOT NULL,
+[VNDR_PROD_NM] [varchar](50) NOT NULL,
+[FUEL_CST_TYP_NM] [varchar](25) NOT NULL,
+[FUEL_CST_AMT][decimal](9,4) NOT NULL,
+[SRC_RW_GRTN_TMS] [datetime]  NULL,
+[RW_PRCS_ID] [varchar](25) NOT NULL,
+[CAL_DT] [date] NOT NULL,
+[DT_SK] [int] NOT NULL ,
+[AUD_INS_SK] [bigint] NULL,
+[AUD_UPD_SK] [bigint] NULL
+	)
+WITH
+(
+	DISTRIBUTION = HASH([CAL_DT]),
+	CLUSTERED COLUMNSTORE INDEX
+)
+;

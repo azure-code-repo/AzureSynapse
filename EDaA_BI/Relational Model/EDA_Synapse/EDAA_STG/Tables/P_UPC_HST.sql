@@ -1,0 +1,13 @@
+﻿CREATE TABLE [EDAA_STG].[P_UPC_HST]
+(
+	[P_UPC_ID] [decimal](18, 0) NULL,
+	[PKY_ID] [smallint] NULL,
+	[MPRS_CT_ID] [smallint] NULL,
+	[P_UPC_DEF_EFF_DT] [date] NULL,
+	[P_UPC_DEF_EXPR_DT] [date] NULL
+)
+WITH
+(
+	DISTRIBUTION = ROUND_ROBIN,
+	CLUSTERED COLUMNSTORE INDEX
+);

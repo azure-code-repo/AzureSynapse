@@ -1,0 +1,18 @@
+﻿CREATE TABLE [EDAA_STG].[TEMP_INV_LY_FSC]
+(
+	[STR_ID] [smallint] NOT NULL,
+	[ITM_SKU] [decimal](18, 0) NOT NULL,
+	[DT_SK] [int] NULL,
+	[LY_DT_SK] [int] NULL,
+	[LY_DT_SK_HLDY] [int] NULL,
+	[LY_DT_SK_CAL] [int] NULL,
+	[INV_AMT_TY] [int] NOT NULL,
+	[INV_QTY_TY] [int] NOT NULL,
+	[INV_AMT_LY] [decimal](13, 4) NULL,
+	[INV_QTY_LY] [decimal](11, 2) NULL
+)
+WITH
+(
+	DISTRIBUTION = ROUND_ROBIN,
+	CLUSTERED COLUMNSTORE INDEX
+)

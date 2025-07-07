@@ -1,0 +1,1291 @@
+{
+	"name": "PL_MFC_OSA_Inc_Src_to_raw",
+	"properties": {
+		"activities": [
+			{
+				"name": "LKP_CONFIG_FILE",
+				"description": "Get the configuration mail ",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "DS_Config_MFC_OSA",
+						"type": "DatasetReference",
+						"parameters": {
+							"Folder_Path": {
+								"value": "configuration\\MerchOrder",
+								"type": "Expression"
+							},
+							"File_Nmae": {
+								"value": "MFC_OSA_Delta_Config.csv",
+								"type": "Expression"
+							}
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "FLTR_SRC",
+				"description": "Filter activity for particular Environment Name to be processed",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "LKP_CONFIG_FILE",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('LKP_CONFIG_FILE').output.value",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@equals(item().DataFactoryName,pipeline().DataFactory)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "ForEach_Synapse_Tables",
+				"description": "Get the list of source tables iterations.",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "FLTR_SRC",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('FLTR_SRC').output.value",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "CP_CURR_PL_PREV_TS",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "DelimitedTextSource",
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": true,
+										"enablePartitionDiscovery": false
+									},
+									"formatSettings": {
+										"type": "DelimitedTextReadSettings"
+									}
+								},
+								"sink": {
+									"type": "DelimitedTextSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "DelimitedTextWriteSettings",
+										"quoteAllText": true,
+										"fileExtension": ".txt"
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"mappings": [
+										{
+											"source": {
+												"name": "CURR_TS",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "CURR_TS",
+												"type": "String",
+												"physicalType": "String"
+											}
+										}
+									],
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "DS_Config_MFC_OSA",
+									"type": "DatasetReference",
+									"parameters": {
+										"Folder_Path": {
+											"value": "@{item().ConfigurationFolderName}",
+											"type": "Expression"
+										},
+										"File_Nmae": {
+											"value": "@item().PipelineProcessedDate",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "DS_Config_MFC_OSA",
+									"type": "DatasetReference",
+									"parameters": {
+										"Folder_Path": {
+											"value": "@{item().ConfigurationFolderName}",
+											"type": "Expression"
+										},
+										"File_Nmae": {
+											"value": "@item().PipelineStartDate",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "CP_CURR_PL_START_TS",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "IF_DELTA_DATA_AVAILABLE",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "DelimitedTextSource",
+									"additionalColumns": [
+										{
+											"name": "V_CURR_TS",
+											"value": {
+												"value": "@formatDateTime(pipeline().parameters.CurrentTS,'yyyy-MM-dd')",
+												"type": "Expression"
+											}
+										}
+									],
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": true,
+										"enablePartitionDiscovery": false
+									},
+									"formatSettings": {
+										"type": "DelimitedTextReadSettings"
+									}
+								},
+								"sink": {
+									"type": "DelimitedTextSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "DelimitedTextWriteSettings",
+										"quoteAllText": true,
+										"fileExtension": ".txt"
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"mappings": [
+										{
+											"source": {
+												"name": "V_CURR_TS",
+												"type": "String"
+											},
+											"sink": {
+												"name": "CURR_TS",
+												"type": "String",
+												"physicalType": "String"
+											}
+										}
+									],
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "DS_Config_MFC_OSA",
+									"type": "DatasetReference",
+									"parameters": {
+										"Folder_Path": {
+											"value": "@{item().ConfigurationFolderName}",
+											"type": "Expression"
+										},
+										"File_Nmae": {
+											"value": "@item().PipelineProcessedDate",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "DS_Config_MFC_OSA",
+									"type": "DatasetReference",
+									"parameters": {
+										"Folder_Path": {
+											"value": "@{item().ConfigurationFolderName}",
+											"type": "Expression"
+										},
+										"File_Nmae": {
+											"value": "@item().PipelineProcessedDate",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "LKP_PREV_PL_START_TS",
+							"type": "Lookup",
+							"dependsOn": [
+								{
+									"activity": "CP_CURR_PL_PREV_TS",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "DelimitedTextSource",
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": true,
+										"enablePartitionDiscovery": false
+									},
+									"formatSettings": {
+										"type": "DelimitedTextReadSettings"
+									}
+								},
+								"dataset": {
+									"referenceName": "DS_Config_MFC_OSA",
+									"type": "DatasetReference",
+									"parameters": {
+										"Folder_Path": {
+											"value": "@{item().ConfigurationFolderName}",
+											"type": "Expression"
+										},
+										"File_Nmae": {
+											"value": "@item().PipelineStartDate",
+											"type": "Expression"
+										}
+									}
+								},
+								"firstRowOnly": true
+							}
+						},
+						{
+							"name": "IF_DELTA_DATA_AVAILABLE",
+							"type": "IfCondition",
+							"dependsOn": [
+								{
+									"activity": "LKP_PREV_PL_START_TS",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"expression": {
+									"value": "@greaterOrEquals(formatDateTime(pipeline().parameters.CurrentTS,'yyyy-MM-dd'),coalesce(activity('LKP_PREV_PL_START_TS').output.firstRow.CURR_TS,formatDateTime(pipeline().parameters.CurrentTS,'yyyy-MM-dd')))",
+									"type": "Expression"
+								},
+								"ifFalseActivities": [
+									{
+										"name": "CP_Zero_rows_RowsCopied",
+										"type": "Copy",
+										"dependsOn": [],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"source": {
+												"type": "DelimitedTextSource",
+												"additionalColumns": [
+													{
+														"name": "v_PL_ROWS_COPIED",
+														"value": {
+															"value": "0",
+															"type": "Expression"
+														}
+													}
+												],
+												"storeSettings": {
+													"type": "AzureBlobFSReadSettings",
+													"recursive": true,
+													"enablePartitionDiscovery": false
+												},
+												"formatSettings": {
+													"type": "DelimitedTextReadSettings"
+												}
+											},
+											"sink": {
+												"type": "DelimitedTextSink",
+												"storeSettings": {
+													"type": "AzureBlobFSWriteSettings"
+												},
+												"formatSettings": {
+													"type": "DelimitedTextWriteSettings",
+													"quoteAllText": true,
+													"fileExtension": ".txt"
+												}
+											},
+											"enableStaging": false,
+											"translator": {
+												"type": "TabularTranslator",
+												"mappings": [
+													{
+														"source": {
+															"name": "v_PL_ROWS_COPIED",
+															"type": "String"
+														},
+														"sink": {
+															"name": "PL_ROWS_COPIED",
+															"type": "String",
+															"physicalType": "String"
+														}
+													}
+												],
+												"typeConversion": true,
+												"typeConversionSettings": {
+													"allowDataTruncation": true,
+													"treatBooleanAsNumber": false
+												}
+											}
+										},
+										"inputs": [
+											{
+												"referenceName": "DS_Config_MFC_OSA",
+												"type": "DatasetReference",
+												"parameters": {
+													"Folder_Path": {
+														"value": "@{item().ConfigurationFolderName}",
+														"type": "Expression"
+													},
+													"File_Nmae": {
+														"value": "@item().Rowsprocessed",
+														"type": "Expression"
+													}
+												}
+											}
+										],
+										"outputs": [
+											{
+												"referenceName": "DS_Config_MFC_OSA",
+												"type": "DatasetReference",
+												"parameters": {
+													"Folder_Path": {
+														"value": "@{item().ConfigurationFolderName}",
+														"type": "Expression"
+													},
+													"File_Nmae": {
+														"value": "@item().Rowsprocessed",
+														"type": "Expression"
+													}
+												}
+											}
+										]
+									},
+									{
+										"name": "CP_CURR_PL_Update_START_TS",
+										"type": "Copy",
+										"dependsOn": [
+											{
+												"activity": "CP_Zero_rows_RowsCopied",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											}
+										],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"source": {
+												"type": "DelimitedTextSource",
+												"additionalColumns": [
+													{
+														"name": "V_CURR_TS",
+														"value": {
+															"value": "@formatDateTime(pipeline().parameters.CurrentTS,'yyyy-MM-dd')",
+															"type": "Expression"
+														}
+													}
+												],
+												"storeSettings": {
+													"type": "AzureBlobFSReadSettings",
+													"recursive": true,
+													"enablePartitionDiscovery": false
+												},
+												"formatSettings": {
+													"type": "DelimitedTextReadSettings"
+												}
+											},
+											"sink": {
+												"type": "DelimitedTextSink",
+												"storeSettings": {
+													"type": "AzureBlobFSWriteSettings"
+												},
+												"formatSettings": {
+													"type": "DelimitedTextWriteSettings",
+													"quoteAllText": true,
+													"fileExtension": ".txt"
+												}
+											},
+											"enableStaging": false,
+											"translator": {
+												"type": "TabularTranslator",
+												"mappings": [
+													{
+														"source": {
+															"name": "V_CURR_TS",
+															"type": "String"
+														},
+														"sink": {
+															"name": "CURR_TS",
+															"type": "String",
+															"physicalType": "String"
+														}
+													}
+												],
+												"typeConversion": true,
+												"typeConversionSettings": {
+													"allowDataTruncation": true,
+													"treatBooleanAsNumber": false
+												}
+											}
+										},
+										"inputs": [
+											{
+												"referenceName": "DS_Config_MFC_OSA",
+												"type": "DatasetReference",
+												"parameters": {
+													"Folder_Path": {
+														"value": "@{item().ConfigurationFolderName}",
+														"type": "Expression"
+													},
+													"File_Nmae": {
+														"value": "@item().PipelineProcessedDate",
+														"type": "Expression"
+													}
+												}
+											}
+										],
+										"outputs": [
+											{
+												"referenceName": "DS_Config_MFC_OSA",
+												"type": "DatasetReference",
+												"parameters": {
+													"Folder_Path": {
+														"value": "@{item().ConfigurationFolderName}",
+														"type": "Expression"
+													},
+													"File_Nmae": {
+														"value": "@item().PipelineProcessedDate",
+														"type": "Expression"
+													}
+												}
+											}
+										]
+									}
+								],
+								"ifTrueActivities": [
+									{
+										"name": "LKP_prevs_Date_process",
+										"description": "this stage will copy the date from MFC_OSA_END_DT.csv to use in the filter condition.",
+										"type": "Lookup",
+										"dependsOn": [],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"source": {
+												"type": "DelimitedTextSource",
+												"storeSettings": {
+													"type": "AzureBlobFSReadSettings",
+													"recursive": true,
+													"enablePartitionDiscovery": false
+												},
+												"formatSettings": {
+													"type": "DelimitedTextReadSettings"
+												}
+											},
+											"dataset": {
+												"referenceName": "DS_Config_MFC_OSA",
+												"type": "DatasetReference",
+												"parameters": {
+													"Folder_Path": {
+														"value": "@{item().ConfigurationFolderName}",
+														"type": "Expression"
+													},
+													"File_Nmae": {
+														"value": "@item().PipelineStartDate",
+														"type": "Expression"
+													}
+												}
+											},
+											"firstRowOnly": true
+										}
+									},
+									{
+										"name": "V_Process_Date",
+										"description": "Prepare date which we will use in where condition to pull data from source ",
+										"type": "SetVariable",
+										"dependsOn": [
+											{
+												"activity": "LKP_prevs_Date_process",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											}
+										],
+										"userProperties": [],
+										"typeProperties": {
+											"variableName": "V_Process_Date",
+											"value": {
+												"value": "@formatDateTime(addDays(substring(coalesce(activity('LKP_prevs_Date_process').output.firstRow.CURR_TS,pipeline().parameters.CurrentTS),0,10),-6 ),'yyyy-MM-dd')",
+												"type": "Expression"
+											}
+										}
+									},
+									{
+										"name": "V_Source_Table",
+										"type": "SetVariable",
+										"dependsOn": [
+											{
+												"activity": "LKP_prevs_Date_process",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											}
+										],
+										"userProperties": [],
+										"typeProperties": {
+											"variableName": "V_Source_Table",
+											"value": {
+												"value": "@item().SourceTableName",
+												"type": "Expression"
+											}
+										}
+									},
+									{
+										"name": "COPY_SRC_TGT",
+										"type": "Copy",
+										"dependsOn": [
+											{
+												"activity": "V_Process_Date",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											},
+											{
+												"activity": "V_Source_Table",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											}
+										],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"source": {
+												"type": "SqlServerSource",
+												"sqlReaderQuery": {
+													"value": "SELECT * FROM  [edaa-stme].[COSMOS_STME_WRK].@{variables('V_Source_Table')} where [orderStatusTimelinenew]  like '%Received%'   AND  [unitId] is not null AND [OrderId] is not null AND [mfcunitId] is not null AND CAST(SUBSTRING(orderStatusTimelinenew,36,22) AS DATE) >= CAST( '@{variables('V_Process_Date')}' AS DATE )",
+													"type": "Expression"
+												},
+												"queryTimeout": "04:00:00",
+												"partitionOption": "None"
+											},
+											"sink": {
+												"type": "DelimitedTextSink",
+												"storeSettings": {
+													"type": "AzureBlobFSWriteSettings"
+												},
+												"formatSettings": {
+													"type": "DelimitedTextWriteSettings",
+													"quoteAllText": true,
+													"fileExtension": ".txt"
+												}
+											},
+											"enableStaging": false,
+											"translator": {
+												"type": "TabularTranslator",
+												"typeConversion": true,
+												"typeConversionSettings": {
+													"allowDataTruncation": true,
+													"treatBooleanAsNumber": false
+												}
+											}
+										},
+										"inputs": [
+											{
+												"referenceName": "DS_SQLServerlessPool",
+												"type": "DatasetReference"
+											}
+										],
+										"outputs": [
+											{
+												"referenceName": "DS_PipeDelimited",
+												"type": "DatasetReference",
+												"parameters": {
+													"Folder_Path": {
+														"value": "@concat(item().DestinationFolderName,'/',pipeline().parameters.DestinationFolderStucture)",
+														"type": "Expression"
+													},
+													"File_Nmae": {
+														"value": "@concat(item().TGT_FILE,'.','txt')",
+														"type": "Expression"
+													}
+												}
+											}
+										]
+									},
+									{
+										"name": "CP_RowsCopied",
+										"type": "Copy",
+										"dependsOn": [
+											{
+												"activity": "COPY_SRC_TGT",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											}
+										],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"source": {
+												"type": "DelimitedTextSource",
+												"additionalColumns": [
+													{
+														"name": "v_PL_ROWS_COPIED",
+														"value": {
+															"value": "@activity('COPY_SRC_TGT').output.rowsCopied",
+															"type": "Expression"
+														}
+													}
+												],
+												"storeSettings": {
+													"type": "AzureBlobFSReadSettings",
+													"recursive": true,
+													"enablePartitionDiscovery": false
+												},
+												"formatSettings": {
+													"type": "DelimitedTextReadSettings"
+												}
+											},
+											"sink": {
+												"type": "DelimitedTextSink",
+												"storeSettings": {
+													"type": "AzureBlobFSWriteSettings"
+												},
+												"formatSettings": {
+													"type": "DelimitedTextWriteSettings",
+													"quoteAllText": true,
+													"fileExtension": ".txt"
+												}
+											},
+											"enableStaging": false,
+											"translator": {
+												"type": "TabularTranslator",
+												"mappings": [
+													{
+														"source": {
+															"name": "v_PL_ROWS_COPIED",
+															"type": "String"
+														},
+														"sink": {
+															"name": "PL_ROWS_COPIED",
+															"type": "String",
+															"physicalType": "String"
+														}
+													}
+												],
+												"typeConversion": true,
+												"typeConversionSettings": {
+													"allowDataTruncation": true,
+													"treatBooleanAsNumber": false
+												}
+											}
+										},
+										"inputs": [
+											{
+												"referenceName": "DS_Config_MFC_OSA",
+												"type": "DatasetReference",
+												"parameters": {
+													"Folder_Path": {
+														"value": "@{item().ConfigurationFolderName}",
+														"type": "Expression"
+													},
+													"File_Nmae": {
+														"value": "@item().Rowsprocessed",
+														"type": "Expression"
+													}
+												}
+											}
+										],
+										"outputs": [
+											{
+												"referenceName": "DS_Config_MFC_OSA",
+												"type": "DatasetReference",
+												"parameters": {
+													"Folder_Path": {
+														"value": "@{item().ConfigurationFolderName}",
+														"type": "Expression"
+													},
+													"File_Nmae": {
+														"value": "@item().Rowsprocessed",
+														"type": "Expression"
+													}
+												}
+											}
+										]
+									},
+									{
+										"name": "COPY_ADUIT_FILE",
+										"description": "This copy stage is used to create audit file",
+										"type": "Copy",
+										"dependsOn": [
+											{
+												"activity": "CP_RowsCopied",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											}
+										],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"source": {
+												"type": "DelimitedTextSource",
+												"additionalColumns": [
+													{
+														"name": "Pipeline_Name",
+														"value": {
+															"value": "@pipeline().Pipeline",
+															"type": "Expression"
+														}
+													},
+													{
+														"name": "Pipeline_Runid",
+														"value": {
+															"value": "@pipeline().RunId",
+															"type": "Expression"
+														}
+													},
+													{
+														"name": "Rows_Copied",
+														"value": {
+															"value": "@activity('COPY_SRC_TGT').output.rowsCopied",
+															"type": "Expression"
+														}
+													},
+													{
+														"name": "Pipeline_Runtime_UTC",
+														"value": {
+															"value": "@utcnow()",
+															"type": "Expression"
+														}
+													},
+													{
+														"name": "SRC_Name",
+														"value": {
+															"value": "@item().DestinationFolderName",
+															"type": "Expression"
+														}
+													},
+													{
+														"name": "SRC_Table",
+														"value": {
+															"value": "@pipeline().parameters.TGT_FILE",
+															"type": "Expression"
+														}
+													},
+													{
+														"name": "Rows_Read",
+														"value": {
+															"value": "@activity('COPY_SRC_TGT').output.rowsRead",
+															"type": "Expression"
+														}
+													}
+												],
+												"storeSettings": {
+													"type": "AzureBlobFSReadSettings",
+													"recursive": true,
+													"enablePartitionDiscovery": false
+												},
+												"formatSettings": {
+													"type": "DelimitedTextReadSettings"
+												}
+											},
+											"sink": {
+												"type": "DelimitedTextSink",
+												"storeSettings": {
+													"type": "AzureBlobFSWriteSettings"
+												},
+												"formatSettings": {
+													"type": "DelimitedTextWriteSettings",
+													"quoteAllText": true,
+													"fileExtension": ".txt"
+												}
+											},
+											"enableStaging": false,
+											"translator": {
+												"type": "TabularTranslator",
+												"mappings": [
+													{
+														"source": {
+															"name": "Pipeline_Name",
+															"type": "String"
+														},
+														"sink": {
+															"name": "Pipeline_Name",
+															"type": "String",
+															"physicalType": "String"
+														}
+													},
+													{
+														"source": {
+															"name": "Pipeline_Runid",
+															"type": "String"
+														},
+														"sink": {
+															"name": "Pipeline_Runid",
+															"type": "String",
+															"physicalType": "String"
+														}
+													},
+													{
+														"source": {
+															"name": "Rows_Copied",
+															"type": "String"
+														},
+														"sink": {
+															"name": "Rows_Copied",
+															"type": "String",
+															"physicalType": "String"
+														}
+													},
+													{
+														"source": {
+															"name": "Pipeline_Runtime_UTC",
+															"type": "String"
+														},
+														"sink": {
+															"name": "Pipeline_Runtime_UTC",
+															"type": "String",
+															"physicalType": "String"
+														}
+													},
+													{
+														"source": {
+															"name": "SRC_Name",
+															"type": "String"
+														},
+														"sink": {
+															"name": "SRC_Name",
+															"type": "String",
+															"physicalType": "String"
+														}
+													},
+													{
+														"source": {
+															"name": "SRC_Table",
+															"type": "String"
+														},
+														"sink": {
+															"name": "SRC_Table",
+															"type": "String",
+															"physicalType": "String"
+														}
+													},
+													{
+														"source": {
+															"name": "Rows_Read",
+															"type": "String"
+														},
+														"sink": {
+															"name": "Rows_Read",
+															"type": "String",
+															"physicalType": "String"
+														}
+													}
+												],
+												"typeConversion": true,
+												"typeConversionSettings": {
+													"allowDataTruncation": true,
+													"treatBooleanAsNumber": false
+												}
+											}
+										},
+										"inputs": [
+											{
+												"referenceName": "DS_Config_MFC_OSA",
+												"type": "DatasetReference",
+												"parameters": {
+													"Folder_Path": {
+														"value": "@{item().ConfigurationFolderName}",
+														"type": "Expression"
+													},
+													"File_Nmae": {
+														"value": "@item().Rowsprocessed",
+														"type": "Expression"
+													}
+												}
+											}
+										],
+										"outputs": [
+											{
+												"referenceName": "DS_Config_MFC_OSA",
+												"type": "DatasetReference",
+												"parameters": {
+													"Folder_Path": {
+														"value": "@concat(item().DestinationFolderName,'/',item().audit)",
+														"type": "Expression"
+													},
+													"File_Nmae": {
+														"value": "@concat(item().TGT_FILE,'_',formatDateTime(utcnow(),'yyyy'),'-',formatDateTime(utcnow(),'MM'),'-',formatDateTime(utcnow(),'dd'),'.','txt')",
+														"type": "Expression"
+													}
+												}
+											}
+										]
+									},
+									{
+										"name": "Lookup rawconfig file",
+										"type": "Lookup",
+										"dependsOn": [
+											{
+												"activity": "COPY_ADUIT_FILE",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											}
+										],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"source": {
+												"type": "DelimitedTextSource",
+												"storeSettings": {
+													"type": "AzureBlobFSReadSettings",
+													"recursive": true,
+													"enablePartitionDiscovery": false
+												},
+												"formatSettings": {
+													"type": "DelimitedTextReadSettings"
+												}
+											},
+											"dataset": {
+												"referenceName": "DS_Config_MFC_OSA",
+												"type": "DatasetReference",
+												"parameters": {
+													"Folder_Path": {
+														"value": "@concat(item().DestinationFolderName,'/',item().audit)",
+														"type": "Expression"
+													},
+													"File_Nmae": {
+														"value": "@concat(item().TGT_FILE,'_',formatDateTime(utcnow(),'yyyy'),'-',formatDateTime(utcnow(),'MM'),'-',formatDateTime(utcnow(),'dd'),'.','txt')",
+														"type": "Expression"
+													}
+												}
+											},
+											"firstRowOnly": false
+										}
+									},
+									{
+										"name": "Notebook for rawfiles",
+										"type": "DatabricksNotebook",
+										"dependsOn": [
+											{
+												"activity": "Lookup rawconfig file",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											}
+										],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"notebookPath": "/Published_Customer/DATA/CLEANSE/getRawFiles",
+											"baseParameters": {
+												"sourceSystem": {
+													"value": "MerchOrder",
+													"type": "Expression"
+												},
+												"domain": {
+													"value": "Customer",
+													"type": "Expression"
+												},
+												"Watermark_Value": {
+													"value": "@utcnow()",
+													"type": "Expression"
+												},
+												"timestampIngested": {
+													"value": "@utcnow()",
+													"type": "Expression"
+												},
+												"rowsCopied": {
+													"value": "@activity('Lookup rawconfig file').output.value[0].Rows_Copied",
+													"type": "Expression"
+												},
+												"tableName": {
+													"value": "@item().TGT_FILE",
+													"type": "Expression"
+												},
+												"fileName": {
+													"value": "@concat(item().TGT_FILE,'.','txt')",
+													"type": "Expression"
+												},
+												"filePath": {
+													"value": "@concat(replace(activity('Lookup rawconfig file').output.value[0].SRC_Name,'\\','/'),'/',pipeline().parameters.DestinationFolderStucture)",
+													"type": "Expression"
+												}
+											}
+										},
+										"linkedServiceName": {
+											"referenceName": "LS_AzureDatabricks1",
+											"type": "LinkedServiceReference"
+										}
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "CP_P_STUS_EVNT_File",
+				"description": "OSA Incremental Source to Raw event status.",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "ForEach_Synapse_Tables",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"additionalColumns": [
+							{
+								"name": "PL_INC_EVNT_STS",
+								"value": "Y"
+							}
+						],
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"sink": {
+						"type": "DelimitedTextSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "DelimitedTextWriteSettings",
+							"quoteAllText": true,
+							"fileExtension": ".txt"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "PL_INC_EVNT_STS",
+									"type": "String"
+								},
+								"sink": {
+									"name": "PL_INC_EVNT_STS",
+									"type": "String",
+									"physicalType": "String"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_Config_MFC_OSA",
+						"type": "DatasetReference",
+						"parameters": {
+							"Folder_Path": {
+								"value": "configuration\\MerchOrder",
+								"type": "Expression"
+							},
+							"File_Nmae": {
+								"value": "MFC_OSA_Delta_Config.csv",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DS_OSA_EVNT_TRG",
+						"type": "DatasetReference",
+						"parameters": {
+							"File_Nmae": {
+								"value": "OSA_Inc_Source_To_Raw_event.csv",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			}
+		],
+		"parameters": {
+			"DestinationFolderStucture": {
+				"type": "string"
+			},
+			"CurrentTS": {
+				"type": "string"
+			},
+			"TGT_FILE": {
+				"type": "string"
+			}
+		},
+		"variables": {
+			"V_prevs_Date_process": {
+				"type": "String"
+			},
+			"V_Process_Date": {
+				"type": "String"
+			},
+			"V_Source_Table": {
+				"type": "String"
+			}
+		},
+		"annotations": []
+	}
+}

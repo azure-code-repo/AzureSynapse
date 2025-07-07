@@ -1,0 +1,1 @@
+﻿CREATE USER [EDaASynapseLoaduser01] WITHOUT LOGIN;

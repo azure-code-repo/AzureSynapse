@@ -1,0 +1,8 @@
+﻿CREATE TABLE [stg].[DLY_UT_P_UPC_HST_LOSTSALES] (
+    [UT_ID]               INT            NOT NULL,
+    [P_UPC_ID]            VARCHAR (18)   NOT NULL,
+    [DAY_DT]              VARCHAR (8)    NOT NULL,
+    [TG_RGL_LOST_SL_QT]   DECIMAL (9, 2) NOT NULL,
+    [TG_PROMO_LOST_SL_QT] DECIMAL (9, 2) NOT NULL
+)
+WITH (HEAP, DISTRIBUTION = ROUND_ROBIN);

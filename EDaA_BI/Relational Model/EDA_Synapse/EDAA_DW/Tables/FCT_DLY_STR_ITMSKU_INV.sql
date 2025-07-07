@@ -1,0 +1,30 @@
+﻿CREATE TABLE [EDAA_DW].[FCT_DLY_STR_ITMSKU_INV]
+(
+	[PROD_HIST_SK] [int] NOT NULL,
+	[GEO_HIST_SK] [int] NOT NULL,
+	[STR_ID] [smallint] NOT NULL,
+	[ITM_SKU] [decimal](18, 0) NOT NULL,
+	[INV_ROW_START_DT] [date] NULL,
+	[INV_ROW_END_DT] [date] NULL,
+	[INV_EACH_AMT] [decimal](9, 4) NULL,
+	[INV_FNC_CHRG_AMT] [decimal](11, 4) NULL,
+	[INV_FNC_CR_AMT] [decimal](11, 4) NULL,
+	[INV_STRGE_CHRG_AMT] [decimal](11, 4) NULL,
+	[INV_FRT_AMT] [decimal](11, 4) NULL,
+	[INV_DIST_CNTR_HNDL_AMT] [decimal](9, 2) NULL,
+	[INV_AMT] [decimal](13, 4) NULL,
+	[INV_QTY] [decimal](11, 2) NULL,
+	[INV_CLRNC_IND] [int] NULL,
+	[AUD_INS_SK] [bigint] NULL,
+	[AUD_UPD_SK] [bigint] NULL,
+ CONSTRAINT [PK_FCT_DLY_STR_ITMSKU_INV] PRIMARY KEY NONCLUSTERED
+	(
+		[PROD_HIST_SK] ASC,
+		[GEO_HIST_SK] ASC
+	) NOT ENFORCED
+)
+WITH
+(
+	DISTRIBUTION =  HASH( [ITM_SKU] ),
+	CLUSTERED COLUMNSTORE INDEX
+);

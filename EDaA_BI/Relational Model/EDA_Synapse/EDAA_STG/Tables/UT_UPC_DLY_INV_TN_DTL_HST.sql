@@ -1,0 +1,24 @@
+﻿CREATE TABLE [EDAA_STG].[UT_UPC_DLY_INV_TN_DTL_HST]
+(
+	[MIRINV_UPC_ID] [decimal](18, 0) NULL,
+	[MIRINV_UT_ID] [smallint] NULL,
+	[MIRINV_MPRS_CATG_ID] [smallint] NULL,
+	[MIRINV_PKY_ID] [smallint] NULL,
+	[MIRINV_DAY_DT] [char](8) NULL,
+	[MIRINV_TRAN_TYPE] [smallint] NULL,
+	[MIRINV_ADJ_TYPE] [nvarchar](3) NULL,
+	[MIRINV_SNAP_BOH] [nvarchar](500) NULL,
+	[MIRINV_ADJ_QTY] [decimal](11, 2) NULL,
+	[MIRINV_MPC] [decimal](9, 4) NULL,
+	[MIRINV_TOT_INV_ADJ_AM] [decimal](17, 4) NULL,
+	[MIRINV_PROC_MIRS_ID] [char](2) NULL,
+	[MIRINV_NON_SAL_MIRS_FL] [char](1) NULL,
+	[MIRINV_PROD_COST] [decimal](13, 4) NULL,
+	[MIRINV_DF_LOC] [char](6) NULL,
+	[MIRINV_ADJ_UT_ID] [smallint] NULL
+)
+WITH
+(
+	DISTRIBUTION = ROUND_ROBIN,
+	CLUSTERED COLUMNSTORE INDEX
+);

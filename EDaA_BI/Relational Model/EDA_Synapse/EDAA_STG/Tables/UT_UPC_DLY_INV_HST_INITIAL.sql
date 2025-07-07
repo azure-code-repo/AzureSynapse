@@ -1,0 +1,22 @@
+﻿CREATE TABLE [EDAA_STG].[UT_UPC_DLY_INV_HST_INITIAL]
+(
+	[UPC_S_ID] [nvarchar](256) NULL,
+	[UT_ID] [int] NULL,
+	[BUS_DT] [date] NULL,
+	[UPC_ID] [float] NULL,
+	[UPC_INV_MPC_EA_AM] [float] NULL,
+	[T_UPC_INV_FNC_CHRG_AM] [float] NULL,
+	[T_UPC_INV_FNC_CR_AM] [float] NULL,
+	[T_UPC_INV_STG_CHRG_AM] [float] NULL,
+	[T_UPC_INV_FRT_AM] [float] NULL,
+	[T_UPC_INV_DF_HDL_AM] [float] NULL,
+	[T_UPC_INV_AM] [float] NULL,
+	[T_UPC_INV_EA_QT] [float] NULL,
+	[T_UPC_INV_CLRN_FLG] [nvarchar](256) NULL,
+	[BAT_ID] [int] NULL
+)
+WITH
+(
+	DISTRIBUTION = ROUND_ROBIN,
+	CLUSTERED COLUMNSTORE INDEX
+);

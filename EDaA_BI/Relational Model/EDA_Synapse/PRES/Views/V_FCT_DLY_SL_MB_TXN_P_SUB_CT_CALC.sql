@@ -1,0 +1,44 @@
+﻿/****** Object:  View [PRES].[V_FCT_DLY_SL_MB_TXN_P_SUB_CT_CALC]    Script Date: 5/21/2021 12:49:50 PM ******/
+/*
+Modified for LLY data - Bug 656285
+*/
+CREATE VIEW [PRES].[V_FCT_DLY_SL_MB_TXN_P_SUB_CT_CALC]
+AS
+SELECT TXN.[GEO_HST_SKY]
+      ,TXN.[GEO_SKY]
+      ,TXN.[TM_SKY]
+
+      ,TXN.[CHNL_HST_SKY]
+      ,TXN.[CHNL_SKY]
+      ,TXN.[UT_ID]
+      ,TXN.[P_CT_BUS_KEY]
+      ,TXN.[FNC_TN_CNT]
+      ,TXN.[FNC_TN_CNT_LY_FSC]
+	  ,null as [FNC_TN_CNT_LLY_FSC]
+      ,TXN.[FNC_TN_CNT_LY_HLDY]
+      ,TXN.[FNC_TN_CNT_LY_CLDR]
+      ,TXN.[FNC_TN_CNT_DIFF_TY_VS_LY_FSC]
+	  ,(ISNULL(TXN.[FNC_TN_CNT],0)-ISNULL(0,0)) AS [FNC_TN_CNT_DIFF_TY_VS_LLY_FSC]
+      ,TXN.[FNC_TN_CNT_DIFF_TY_VS_LY_HLDY]
+      ,TXN.[FNC_TN_CNT_DIFF_TY_VS_LY_CLDR]
+  FROM [PRES].[FCT_DLY_SL_MB_TXN_P_SUB_CT_CALC]  AS TXN WITH(NOLOCK)
+  WHERE TXN.IS_ATV = 1
+  Union ALL
+  SELECT
+	   LLY.[GEO_HST_SKY]
+      ,LLY.[GEO_SKY]
+      ,LLY.[TM_SKY]
+      ,LLY.[CHNL_HST_SKY]
+      ,[CHNL_SKY]
+      ,LLY.[UT_ID]
+      ,LLY.[P_CT_BUS_KEY]
+	  ,null
+	  ,null
+      ,LLY.[FNC_TN_CNT_LLY_FSC]
+	  ,null
+      ,null
+      ,null
+	  ,(ISNULL(null,0)-ISNULL(LLY.[FNC_TN_CNT_LLY_FSC],0)) AS [FNC_TN_CNT_DIFF_TY_VS_LLY_FSC]
+      ,null
+      ,null
+  FROM [PRES].[V_GET_FCT_DLY_SL_MB_TXN_P_SUB_CT_CALC_LLY] AS LLY WITH(NOLOCK);

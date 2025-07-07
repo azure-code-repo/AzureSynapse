@@ -1,0 +1,143 @@
+{
+	"name": "PL_IMS_AllCollections",
+	"properties": {
+		"activities": [
+			{
+				"name": "Lookup1",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "DS_IMS_Configuration_CSV",
+						"type": "DatasetReference",
+						"parameters": {
+							"fileName": "OSA_IMS_CONFIGURATION.csv"
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "ForEach1",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Filter1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Filter1').output.value",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"batchCount": 5,
+					"activities": [
+						{
+							"name": "Execute Pipeline1",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PL_IMS_Ingestion",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": false,
+								"parameters": {
+									"p_SourceTableName": {
+										"value": "@item().SourceTableName",
+										"type": "Expression"
+									},
+									"p_SourceSystem": {
+										"value": "@item().SourceSystem",
+										"type": "Expression"
+									},
+									"ViewName": {
+										"value": "@item().ViewName",
+										"type": "Expression"
+									},
+									"QueryPattern": {
+										"value": "@item().QueryPattern",
+										"type": "Expression"
+									},
+									"Domain": {
+										"value": "@item().Domain",
+										"type": "Expression"
+									},
+									"folderName": {
+										"value": "@concat('Year=',formatDateTime(utcnow(),'yyyy'),'/','Month=',formatDateTime(utcnow(),'MM'),'/','Day=',formatDateTime(utcnow(),'dd'))",
+										"type": "Expression"
+									},
+									"fileName": {
+										"value": "@concat('data','_',formatDateTime(utcnow()),'.json')",
+										"type": "Expression"
+									},
+									"DatabaseName": {
+										"value": "@item().DatabaseName",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "Filter1",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "Lookup1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Lookup1').output.value",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@and(equals(item().DatabaseName,pipeline().parameters.p_DatabaseName),equals(item().SourceSystem,pipeline().parameters.p_SourceSystem))",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"parameters": {
+			"p_DatabaseName": {
+				"type": "string"
+			},
+			"p_SourceSystem": {
+				"type": "string"
+			}
+		},
+		"annotations": []
+	}
+}

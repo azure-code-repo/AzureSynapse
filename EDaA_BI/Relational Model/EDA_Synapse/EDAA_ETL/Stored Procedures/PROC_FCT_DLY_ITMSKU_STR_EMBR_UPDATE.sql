@@ -1,0 +1,293 @@
+﻿CREATE PROC [EDAA_ETL].[PROC_FCT_DLY_ITMSKU_STR_EMBR_UPDATE] AS
+
+Begin TRY
+
+/*DATAMART AUDITING VARIABLES*/
+DECLARE @NEW_AUD_SKY BIGINT
+DECLARE @NBR_OF_RW_ISRT INT
+DECLARE @NBR_OF_RW_UDT INT
+DECLARE @EXEC_LYR VARCHAR(255)
+DECLARE @EXEC_JOB VARCHAR(500)
+DECLARE @SRC_ENTY VARCHAR(500)
+DECLARE @TGT_ENTY VARCHAR(500)
+
+/*AUDIT LOG START*/
+EXEC EDAA_CNTL.SP_AUDIT_DATA_LOAD_START
+ @EXEC_LYR  = 'EDAA_DW'
+,@EXEC_JOB  = 'PROC_FCT_DLY_ITMSKU_STR_EMBR_UPDATE'
+,@SRC_ENTY  = 'EDAA_STG_UT_UPC_DLY'
+,@TGT_ENTY = 'EDAA_DW_FCT_DLY_STR_ITMSKU'
+,@NEW_AUD_SKY = @NEW_AUD_SKY OUTPUT
+
+
+DECLARE @NBR_OF_RW_ISRT_TOTAL INT = 0,  @NBR_OF_RW_UDT_TOTAL INT =0
+
+DECLARE @NEXT_GEO_HIST_SK INT
+SELECT @NEXT_GEO_HIST_SK =ISNULL(MAX(GEO_HIST_SK),0)   FROM EDAA_DW.DIM_GEO
+
+PRINT('LATEARRIVINGDIMENSION: DIM_GEO LOAD')
+
+IF(@NEXT_GEO_HIST_SK IS NOT NULL)
+BEGIN
+
+INSERT INTO EDAA_DW.DIM_GEO
+
+SELECT
+		   (ROW_NUMBER() OVER (ORDER BY STR_ID)) + @NEXT_GEO_HIST_SK 		AS GEO_HIST_SK
+		  ,(ROW_NUMBER() OVER (ORDER BY STR_ID)) + @NEXT_GEO_HIST_SK  		AS GEO_SK
+		  ,CONVERT(INTEGER,STR_ID)   								 		AS STR_ID
+		  ,CONVERT(VARCHAR(5),'n/a')		STR_NM
+		  ,CONVERT(INTEGER,0)				GROSS_FLR_AREA
+		  ,CONVERT(VARCHAR(5),'n/a')		RGN_NM
+		  ,CONVERT(VARCHAR(5),'n/a')		MKT_NM
+		  ,NULL                    AS		LOC_LNGTD
+		  ,NULL                    AS		LOC_LTTD
+		  ,CONVERT(INTEGER,-1)				STR_CLS_ID
+		  ,CONVERT(VARCHAR(5),'n/a')		STR_CLS_NM
+		  ,CONVERT(VARCHAR(5),'n/a')		LOC_ST_ID
+		  ,CONVERT(VARCHAR(5),'n/a')		LOC_CNTY_ID
+		  ,CONVERT(VARCHAR(5),'n/a')		LOC_CTY
+		  ,CONVERT(VARCHAR(5),'n/a')		LOC_ZP_CODE
+		  ,CONVERT(VARCHAR(5),'n/a')		DIV_ID
+		  ,CONVERT(VARCHAR(5),'n/a')		DIV_NM
+		  ,NULL                    AS		CURR_YR_NEW_STR_IND
+		  ,NULL                    AS		LST_YR_NEW_STR_IND
+		  ,NULL                    AS		TWO_YRS_AGO_NEW_STR_IND
+		  ,NULL                    AS		RGN_ID
+		  ,NULL                    AS		MKT_ID
+		  ,NULL                    AS		STR_OPN_DT
+		  ,NULL                    AS		STR_CLS_DT
+		  ,CONVERT(VARCHAR(5),'n/a')		STR_CTGRY_NM
+		  ,NULL                    AS		STR_ZN_ID
+		  ,CONVERT(VARCHAR(5),'n/a')		STR_ZN_NM
+		  ,NULL                    AS		STR_CMP_CTGRY_ID
+		  ,CONVERT(VARCHAR(5),'n/a')		STR_CMP_CTGRY_DESC
+		  ,CAST('2000-01-01' AS DATE)	    VLD_FROM
+		  ,CAST('2099-01-01' AS DATE)		VLD_TO
+		  ,CAST(1 AS BIT)					IS_CURR_IND
+		  ,CAST(0 AS BIT)					IS_DMY_IND
+		  ,CAST(1 AS BIT)					IS_EMB_IND
+		  ,'New embryo'					    ETL_ACTN
+		  ,@NEW_AUD_SKY						AUD_INS_SK
+		  ,NULL								AUD_UPD_SK
+
+FROM
+	(
+	SELECT DISTINCT STR_ID FROM [EDAA_DW].[FCT_DLY_STR_ITMSKU_SLS]  WHERE 	GEO_HIST_SK=-1
+	union
+	select DISTINCT STR_ID FROM [EDAA_DW].[FCT_DLY_STR_ITMSKU_SLS_ADJ]  WHERE 	GEO_HIST_SK=-1
+	union
+	select DISTINCT STR_ID FROM [EDAA_DW].[FCT_DLY_STR_ITMSKU_LOST_SLS]  WHERE 	GEO_HIST_SK=-1
+	union
+	select DISTINCT STR_ID FROM [EDAA_DW].[FCT_DLY_STR_ITMSKU_INV_ADJ]  WHERE 	GEO_HIST_SK=-1
+	union
+	select DISTINCT STR_ID FROM [EDAA_DW].[FCT_DLY_STR_ITMSKU_INV_HST]  WHERE 	GEO_HIST_SK=-1
+	union
+	select DISTINCT STR_ID FROM [EDAA_DW].[FCT_DLY_STR_ITMSKU_INV]  WHERE 	GEO_HIST_SK=-1
+	) AS MISSING_GEO
+	WHERE 	NOT EXISTS
+	(
+	SELECT 1 FROM EDAA_DW.DIM_GEO DIM
+	WHERE
+	MISSING_GEO.STR_ID = DIM.STR_ID
+	)
+;
+
+
+update [EDAA_DW].[FCT_DLY_STR_ITMSKU_SLS] set GEO_HIST_SK= geo.GEO_HIST_SK, AUD_UPD_SK=@NEW_AUD_SKY
+from [EDAA_DW].[FCT_DLY_STR_ITMSKU_SLS] A, EDAA_DW.DIM_GEO geo where A.STR_ID=geo.STR_ID and A.GEO_HIST_SK=-1 ;
+SELECT @NBR_OF_RW_ISRT = count(0)  FROM EDAA_DW.FCT_DLY_STR_ITMSKU_SLS where AUD_INS_SK=@NEW_AUD_SKY ;
+select  @NBR_OF_RW_ISRT_TOTAL= @NBR_OF_RW_ISRT_TOTAL+ @NBR_OF_RW_ISRT
+
+update [EDAA_DW].[FCT_DLY_STR_ITMSKU_SLS_ADJ] set GEO_HIST_SK= geo.GEO_HIST_SK, AUD_UPD_SK=@NEW_AUD_SKY
+from [EDAA_DW].[FCT_DLY_STR_ITMSKU_SLS_ADJ] A, EDAA_DW.DIM_GEO geo where A.STR_ID=geo.STR_ID and A.GEO_HIST_SK=-1 ;
+SELECT @NBR_OF_RW_ISRT = count(0)  FROM EDAA_DW.FCT_DLY_STR_ITMSKU_SLS_ADJ where AUD_INS_SK=@NEW_AUD_SKY ;
+select  @NBR_OF_RW_ISRT_TOTAL= @NBR_OF_RW_ISRT_TOTAL+ @NBR_OF_RW_ISRT
+
+update [EDAA_DW].[FCT_DLY_STR_ITMSKU_LOST_SLS] set GEO_HIST_SK= geo.GEO_HIST_SK, AUD_UPD_SK=@NEW_AUD_SKY
+from [EDAA_DW].[FCT_DLY_STR_ITMSKU_LOST_SLS] A, EDAA_DW.DIM_GEO geo where A.STR_ID=geo.STR_ID and A.GEO_HIST_SK=-1 ;
+SELECT @NBR_OF_RW_ISRT = count(0)  FROM EDAA_DW.FCT_DLY_STR_ITMSKU_LOST_SLS where AUD_INS_SK=@NEW_AUD_SKY ;
+select  @NBR_OF_RW_ISRT_TOTAL= @NBR_OF_RW_ISRT_TOTAL+ @NBR_OF_RW_ISRT
+
+update [EDAA_DW].[FCT_DLY_STR_ITMSKU_INV] set GEO_HIST_SK= geo.GEO_HIST_SK, AUD_UPD_SK=@NEW_AUD_SKY
+from [EDAA_DW].[FCT_DLY_STR_ITMSKU_INV] A, EDAA_DW.DIM_GEO geo where A.STR_ID=geo.STR_ID and A.GEO_HIST_SK=-1 ;
+SELECT @NBR_OF_RW_ISRT = count(0)  FROM EDAA_DW.FCT_DLY_STR_ITMSKU_INV where AUD_INS_SK=@NEW_AUD_SKY ;
+select  @NBR_OF_RW_ISRT_TOTAL= @NBR_OF_RW_ISRT_TOTAL+ @NBR_OF_RW_ISRT
+
+update [EDAA_DW].[FCT_DLY_STR_ITMSKU_INV_HST] set GEO_HIST_SK= geo.GEO_HIST_SK, AUD_UPD_SK=@NEW_AUD_SKY
+from [EDAA_DW].[FCT_DLY_STR_ITMSKU_INV_HST]  A, EDAA_DW.DIM_GEO geo where A.STR_ID=geo.STR_ID and A.GEO_HIST_SK=-1 ;
+SELECT @NBR_OF_RW_ISRT = count(0)  FROM [EDAA_DW].[FCT_DLY_STR_ITMSKU_INV_HST] where AUD_INS_SK=@NEW_AUD_SKY ;
+select  @NBR_OF_RW_ISRT_TOTAL= @NBR_OF_RW_ISRT_TOTAL+ @NBR_OF_RW_ISRT
+
+update [EDAA_DW].[FCT_DLY_STR_ITMSKU_INV_ADJ] set GEO_HIST_SK= geo.GEO_HIST_SK, AUD_UPD_SK=@NEW_AUD_SKY
+from [EDAA_DW].[FCT_DLY_STR_ITMSKU_INV_ADJ] A, EDAA_DW.DIM_GEO geo where A.STR_ID=geo.STR_ID and A.GEO_HIST_SK=-1 ;
+SELECT @NBR_OF_RW_ISRT = count(0)  FROM EDAA_DW.FCT_DLY_STR_ITMSKU_INV_ADJ where AUD_INS_SK=@NEW_AUD_SKY ;
+select  @NBR_OF_RW_ISRT_TOTAL= @NBR_OF_RW_ISRT_TOTAL+ @NBR_OF_RW_ISRT
+
+
+END
+
+/* Validate Late arriving dimension: DIM_PROD */
+PRINT('LATEARRIVINGDIMENSION: DIM_PROD')
+
+
+DECLARE @NEXT_PROD_HIST_SK INT
+SELECT @NEXT_PROD_HIST_SK =ISNULL(MAX(PROD_HIST_SK),0)   FROM EDAA_DW.DIM_PROD
+
+PRINT('LATEARRIVINGDIMENSION: DIM_PROD LOAD')
+
+IF(@NEXT_PROD_HIST_SK IS NOT NULL)
+BEGIN
+--select top 2 * from EDAA_DW.DIM_PROD
+INSERT INTO EDAA_DW.DIM_PROD
+
+
+SELECT
+            (ROW_NUMBER() OVER (ORDER BY Itm_Sku)) + @NEXT_PROD_HIST_SK 	AS PROD_HIST_SK
+            ,(ROW_NUMBER() OVER (ORDER BY Itm_Sku)) + @NEXT_PROD_HIST_SK  	AS PROD_SK
+            ,CONVERT(VARCHAR(150),MISSING_PROD.Itm_Sku)   					AS Itm_Sku
+            ,'n/a'        AS      Itm_Nm
+            ,'n/a'        AS      Lvl1_Prod_Id
+            ,'n/a'        AS      Lvl1_Prod_Desc
+            ,'n/a'        AS      Lvl2_Prod_Clsfctn_Id
+            ,'n/a'        AS      Lvl2_Prod_Clsfctn_Desc
+            ,'n/a'        AS      Lvl3_Prod_Sub_Ctgry_Id
+            ,'n/a'        AS      Lvl3_Prod_Sub_Ctgry_Desc
+            ,'n/a'        AS      Lvl4_Prod_Ctgry_Id
+            ,'n/a'        AS      Lvl4_Prod_Ctgry_Desc
+            ,'n/a'        AS      Lvl5_Bsns_Sgmt_Id
+            ,'n/a'        AS      Lvl5_Bsns_Sgmt_Desc
+            ,'n/a'        AS      Lvl6_MDS_Area_Id
+            ,'n/a'        AS      Lvl6_MDS_Area_Desc
+            ,'n/a'        AS      Fnc_Lvl1_Prod_Ctgry_Id
+            ,'n/a'        AS      Fnc_Lvl1_Prod_Ctgry_Desc
+            ,0 AS Fnc_Lvl2_Mprs_Ctgry_Id
+            ,'n/a'        AS Fnc_Lvl2_Mprs_Ctgry_Desc
+            ,0 AS Fnc_Lvl3_Pky_Id
+            ,'n/a'        AS      Fnc_Lvl3_Pky_Desc
+            ,'n/a'        AS      Fnc_Lvl4_Area_Id
+            ,'n/a'        AS      Fnc_Lvl4_Area_Desc
+            ,NULL   AS Str_Area_Dtl_Id
+            ,'n/a'        AS      Str_Area_Dtl_Desc
+            ,NULL   AS Str_Area_Summ_Id
+            ,'n/a'        AS      Str_Area_Summ_Desc
+            ,NULL   AS Str_Dept_Dtl_Id
+            ,'n/a'        AS      Str_Dept_Dtl_Desc
+            ,NULL   AS Str_Dept_Summ_Id
+            ,'n/a'        AS      Str_Dept_Summ_Desc
+            ,CAST('2000-01-01' AS DATE) AS Vld_Frm
+            ,CAST('2099-01-01' AS DATE) AS Vld_To
+            ,CAST(1 AS BIT)					Is_Curr_Ind
+            ,CAST(0 AS BIT)					Is_Dmy_Ind
+            ,CAST(1 AS BIT)					Is_Emb_Ind
+            ,'New embryo'					Etl_Actn
+            ,@NEW_AUD_SKY				    Aud_Ins_sk
+            ,NULL					        Aud_Upd_sk
+			,NULL							[Itm_Prim_Ind]
+			,NULL							[Prod_Size_Desc]
+			,NULL							[Brnd_Nm]
+			,NULL							[Brnd_Desc]
+			,NULL							[Brnd_Ctgry]
+			,NULL							[Prod_Desc]
+			,NULL							[Prod_Desc_Note]
+			,NULL							[Outdate]
+			,NULL							[Byr_Id]
+			,NULL							[Prod_Sts]
+			,NULL							[Prod_Sts_Note]
+			,NULL							[Vdr_Id]
+			,NULL							[Sku_Ct]
+
+FROM
+	(
+	SELECT DISTINCT ITM_SKU FROM [EDAA_DW].[FCT_DLY_STR_ITMSKU_SLS]  WHERE 	PROD_HIST_SK=-1
+	union
+	select DISTINCT ITM_SKU FROM [EDAA_DW].[FCT_DLY_STR_ITMSKU_SLS_ADJ]  WHERE 	PROD_HIST_SK=-1
+	union
+	select DISTINCT ITM_SKU FROM [EDAA_DW].[FCT_DLY_STR_ITMSKU_LOST_SLS]  WHERE 	PROD_HIST_SK=-1
+	union
+	select DISTINCT ITM_SKU FROM [EDAA_DW].[FCT_DLY_STR_ITMSKU_INV_ADJ]  WHERE 	PROD_HIST_SK=-1
+	union
+	select DISTINCT ITM_SKU FROM [EDAA_DW].[FCT_DLY_STR_ITMSKU_INV_HST]  WHERE 	PROD_HIST_SK=-1
+	union
+	select DISTINCT ITM_SKU FROM [EDAA_DW].[FCT_DLY_STR_ITMSKU_INV]  WHERE 	PROD_HIST_SK=-1
+	) AS MISSING_PROD
+	WHERE 	NOT EXISTS
+	(
+	SELECT 1 FROM EDAA_DW.DIM_PROD DIM_PROD
+	WHERE
+	      MISSING_PROD.ITM_SKU = DIM_PROD.Itm_Sku
+      -- AND MISSING_PROD.Fnc_Lvl2_Mprs_Ctgry_Id = DIM_PROD.Fnc_Lvl2_Mprs_Ctgry_Id
+      -- AND MISSING_PROD.Fnc_Lvl3_Pky_Id = DIM_PROD.Fnc_Lvl3_Pky_Id
+	)
+;
+
+update [EDAA_DW].[FCT_DLY_STR_ITMSKU_SLS] set PROD_HIST_SK= p.PROD_HIST_SK, AUD_UPD_SK=@NEW_AUD_SKY
+from [EDAA_DW].[FCT_DLY_STR_ITMSKU_SLS] A, EDAA_DW.DIM_PROD p where A.Itm_Sku=p.Itm_Sku and A.PROD_HIST_SK=-1 ;
+SELECT @NBR_OF_RW_ISRT = count(0)  FROM [EDAA_DW].[FCT_DLY_STR_ITMSKU_SLS] where AUD_INS_SK=@NEW_AUD_SKY ;
+select  @NBR_OF_RW_ISRT_TOTAL= @NBR_OF_RW_ISRT_TOTAL+ @NBR_OF_RW_ISRT
+
+update [EDAA_DW].[FCT_DLY_STR_ITMSKU_SLS_ADJ] set PROD_HIST_SK= p.PROD_HIST_SK, AUD_UPD_SK=@NEW_AUD_SKY
+from [EDAA_DW].[FCT_DLY_STR_ITMSKU_SLS_ADJ] A, EDAA_DW.DIM_PROD p where A.Itm_Sku=p.Itm_Sku and A.PROD_HIST_SK=-1 ;
+SELECT @NBR_OF_RW_ISRT = count(0)  FROM [EDAA_DW].[FCT_DLY_STR_ITMSKU_SLS_ADJ] where AUD_INS_SK=@NEW_AUD_SKY ;
+select  @NBR_OF_RW_ISRT_TOTAL= @NBR_OF_RW_ISRT_TOTAL+ @NBR_OF_RW_ISRT
+
+
+update [EDAA_DW].[FCT_DLY_STR_ITMSKU_LOST_SLS] set PROD_HIST_SK= p.PROD_HIST_SK, AUD_UPD_SK=@NEW_AUD_SKY
+from [EDAA_DW].[FCT_DLY_STR_ITMSKU_LOST_SLS] A, EDAA_DW.DIM_PROD p where A.Itm_Sku=p.Itm_Sku and A.PROD_HIST_SK=-1 ;
+SELECT @NBR_OF_RW_ISRT = count(0)  FROM [EDAA_DW].[FCT_DLY_STR_ITMSKU_LOST_SLS] where AUD_INS_SK=@NEW_AUD_SKY ;
+select  @NBR_OF_RW_ISRT_TOTAL= @NBR_OF_RW_ISRT_TOTAL+ @NBR_OF_RW_ISRT
+
+update [EDAA_DW].[FCT_DLY_STR_ITMSKU_INV] set PROD_HIST_SK= p.PROD_HIST_SK, AUD_UPD_SK=@NEW_AUD_SKY
+from [EDAA_DW].[FCT_DLY_STR_ITMSKU_INV] A, EDAA_DW.DIM_PROD p where A.Itm_Sku=p.Itm_Sku and A.PROD_HIST_SK=-1 ;
+SELECT @NBR_OF_RW_ISRT = count(0)  FROM [EDAA_DW].[FCT_DLY_STR_ITMSKU_INV] where AUD_INS_SK=@NEW_AUD_SKY ;
+select  @NBR_OF_RW_ISRT_TOTAL= @NBR_OF_RW_ISRT_TOTAL+ @NBR_OF_RW_ISRT
+
+update [EDAA_DW].[FCT_DLY_STR_ITMSKU_INV_HST] set PROD_HIST_SK= p.PROD_HIST_SK, AUD_UPD_SK=@NEW_AUD_SKY
+from [EDAA_DW].[FCT_DLY_STR_ITMSKU_INV_HST]  A, EDAA_DW.DIM_PROD p where A.Itm_Sku=p.Itm_Sku and A.PROD_HIST_SK=-1 ;
+SELECT @NBR_OF_RW_ISRT = count(0)  FROM [EDAA_DW].[FCT_DLY_STR_ITMSKU_INV_HST] where AUD_INS_SK=@NEW_AUD_SKY ;
+select  @NBR_OF_RW_ISRT_TOTAL= @NBR_OF_RW_ISRT_TOTAL+ @NBR_OF_RW_ISRT
+
+update [EDAA_DW].[FCT_DLY_STR_ITMSKU_INV_ADJ] set PROD_HIST_SK= p.PROD_HIST_SK, AUD_UPD_SK=@NEW_AUD_SKY
+from [EDAA_DW].[FCT_DLY_STR_ITMSKU_INV_ADJ]  A, EDAA_DW.DIM_PROD p where A.Itm_Sku=p.Itm_Sku and A.PROD_HIST_SK=-1 ;
+SELECT @NBR_OF_RW_ISRT = count(0)  FROM [EDAA_DW].[FCT_DLY_STR_ITMSKU_INV_ADJ] where AUD_INS_SK=@NEW_AUD_SKY ;
+select  @NBR_OF_RW_ISRT_TOTAL= @NBR_OF_RW_ISRT_TOTAL+ @NBR_OF_RW_ISRT
+
+;
+
+END
+
+/*Audit Log End*/
+EXEC EDAA_CNTL.SP_AUDIT_DATA_LOAD_END @AUD_SKY = @NEW_AUD_SKY, @NBR_OF_RW_ISRT = @NBR_OF_RW_ISRT, @NBR_OF_RW_UDT  = @NBR_OF_RW_UDT
+
+END TRY
+
+BEGIN CATCH
+DECLARE @ERROR_PROCEDURE_NAME AS VARCHAR(60) = '[EDAA_ETL].[PROC_FCT_DLY_ITMSKU_STR_EMBR_UPDATE]'
+DECLARE @ERROR_LINE AS INT;
+DECLARE @ERROR_MSG AS NVARCHAR(max);
+
+
+
+
+ SELECT
+      @ERROR_LINE =  ERROR_NUMBER()
+       ,@ERROR_MSG = ERROR_MESSAGE();
+--------- Log execution error ----------
+
+
+
+EXEC EDAA_CNTL.SP_LOG_AUD_ERR
+@AUD_SKY = @NEW_AUD_SKY,
+@ERROR_PROCEDURE_NAME = @ERROR_PROCEDURE_NAME,
+@ERROR_LINE = @ERROR_LINE,
+@ERROR_MSG = @ERROR_MSG;
+
+-- Detect the change
+
+
+   THROW;
+
+
+
+
+END CATCH

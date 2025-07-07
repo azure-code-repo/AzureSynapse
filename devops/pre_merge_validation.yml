@@ -1,0 +1,24 @@
+trigger: none
+
+name: PreMerge_Validation_$(date:yyyyMMdd)$(rev:.r)_$(system.pullRequest.targetBranchName)
+
+resources:
+  repositories:
+    - repository: templates
+      name: Meijer/EDaA_DevOps
+      type: git
+      ref: 'refs/heads/main'
+
+jobs:
+- job: Pre_MergeSQLValidationSynapse
+  displayName: Pre-Merge Validation for SQL Deploy Scripts in Synapse Repositories.
+  condition: eq(variables['system.pullRequest.targetBranchName'], 'development')
+  steps:
+    - template: \templates\steps\synapse_SQLScriptValidation.yml@templates
+      parameters:
+        fileToValidate: 'ScriptDeploy.sql'
+        pathToSearch: 'scripts/cert'
+    - template: \templates\steps\synapse_SQLScriptValidation.yml@templates
+      parameters:
+        fileToValidate: 'ScriptDeploy.sql'
+        pathToSearch: 'scripts/prod'

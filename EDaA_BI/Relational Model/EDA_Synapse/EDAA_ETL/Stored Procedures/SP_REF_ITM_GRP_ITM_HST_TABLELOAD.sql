@@ -1,0 +1,98 @@
+﻿CREATE PROC [EDAA_ETL].[SP_REF_ITM_GRP_ITM_HST_TABLELOAD] AS
+
+/*
+ =============================================
+ Author:        Akanksha Kumari
+ Create date:   02-Dec-2021
+ Description:   Stored proc to load data from EDAA_STG.ITM_GRP_ITM (actual source -SQL SERVER table FUEL_TYP)
+				to ITM_GRP_ITM_HST table on EDAA_REF
+ =============================================
+ Change History
+ 02-Dec-2021   Akanksha Kumari      Initial version
+
+*/
+
+BEGIN TRY
+
+SET NOCOUNT ON
+SET XACT_ABORT ON
+
+/*Datamart Auditing variables*/
+DECLARE @NEW_AUD_SKY BIGINT
+DECLARE @NBR_OF_RW_ISRT INT
+DECLARE @NBR_OF_RW_UDT INT
+DECLARE @EXEC_LYR VARCHAR(255)
+DECLARE @EXEC_JOB VARCHAR(500)
+DECLARE @SRC_ENTY VARCHAR(500)
+DECLARE @TGT_ENTY VARCHAR(500)
+
+/*Audit Log Start*/
+EXEC EDAA_CNTL.SP_AUDIT_DATA_LOAD_START
+ @EXEC_LYR  = 'EDAA_REF'
+,@EXEC_JOB  = 'SP_REF_ITM_GRP_ITM_HST_TABLELOAD'
+,@SRC_ENTY  = 'ITM_GRP_ITM'
+,@TGT_ENTY = 'ITM_GRP_ITM_HST'
+,@NEW_AUD_SKY = @NEW_AUD_SKY OUTPUT
+
+
+---------update data in target table -----
+UPDATE EDAA_REF.ITM_GRP_ITM_HST
+  SET
+		PRD_END_DT = GETDATE()-1,
+		AUD_UPD_SK = @NEW_AUD_SKY
+FROM EDAA_STG.ITM_GRP_ITM STG
+INNER JOIN EDAA_REF.ITM_GRP_ITM_HST TGT
+on  STG.ITM_GRP_ID = TGT.ITM_GRP_ID
+WHERE TGT.PRD_END_DT = '2099-01-01'
+
+--------insert new data in target table---
+
+INSERT INTO EDAA_REF.ITM_GRP_ITM_HST
+SELECT
+		ITM_GRP_ID
+		,ITM_SKU_ID
+		,PRD_STRT_DT
+		,PRD_END_DT
+		,@NEW_AUD_SKY AS AUD_INS_SK
+		,NULL AS AUD_UPD_SK
+FROM EDAA_STG.ITM_GRP_ITM
+
+
+BEGIN
+SELECT @NBR_OF_RW_ISRT = COUNT(1)  FROM [EDAA_REF].[ITM_GRP_ITM_HST] WHERE Aud_Ins_Sk = @NEW_AUD_SKY
+SELECT @NBR_OF_RW_UDT  = COUNT(1)  FROM [EDAA_REF].[ITM_GRP_ITM_HST] WHERE Aud_Upd_Sk = @NEW_AUD_SKY
+
+END
+
+/*Audit Log End*/
+EXEC EDAA_CNTL.SP_AUDIT_DATA_LOAD_END @AUD_SKY = @NEW_AUD_SKY, @NBR_OF_RW_ISRT = @NBR_OF_RW_ISRT, @NBR_OF_RW_UDT  = @NBR_OF_RW_UDT
+
+END TRY
+
+BEGIN CATCH
+DECLARE @ERROR_PROCEDURE_NAME AS VARCHAR(60) = 'SP_REF_ITM_GRP_ITM_HST_TABLELOAD'
+DECLARE @ERROR_LINE AS INT;
+DECLARE @ERROR_MSG AS NVARCHAR(max);
+
+ SELECT
+      @ERROR_LINE =  ERROR_NUMBER()
+       ,@ERROR_MSG = ERROR_MESSAGE();
+--------- Log execution error ----------
+
+
+
+EXEC EDAA_CNTL.SP_LOG_AUD_ERR
+@AUD_SKY = @NEW_AUD_SKY,
+@ERROR_PROCEDURE_NAME = @ERROR_PROCEDURE_NAME,
+@ERROR_LINE = @ERROR_LINE,
+@ERROR_MSG = @ERROR_MSG;
+
+-- Detect the change
+------- stored proc execution should fail. The processing of the presentation layer
+
+   THROW;
+
+
+
+
+END CATCH

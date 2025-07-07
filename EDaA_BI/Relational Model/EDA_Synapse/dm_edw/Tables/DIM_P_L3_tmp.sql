@@ -1,0 +1,25 @@
+﻿CREATE TABLE [dm_edw].[DIM_P_L3_tmp] (
+    [P_HST_SKY]       INT            NULL,
+    [P_SKY]           INT            NULL,
+    [P_SUB_CT_ID]     NVARCHAR (256) NULL,
+    [P_SUB_CT_DSC]    NVARCHAR (256) NULL,
+    [P_CT_ID]         NVARCHAR (256) NULL,
+    [P_CT_DSC]        NVARCHAR (256) NULL,
+    [BUS_SEG_ID]      NVARCHAR (256) NULL,
+    [BUS_SEG_DSC]     NVARCHAR (256) NULL,
+    [MDS_ARE_ID]      NVARCHAR (256) NULL,
+    [MDS_ARE_DSC]     NVARCHAR (256) NULL,
+    [FNC_MPRS_CT_ID]  INT            NULL,
+    [FNC_MPRS_CT_DSC] NVARCHAR (256) NULL,
+    [FNC_PKY_ID]      INT            NULL,
+    [FNC_PKY_DSC]     NVARCHAR (256) NULL,
+    [FNC_ARE_ID]      NVARCHAR (256) NULL,
+    [FNC_ARE_DSC]     NVARCHAR (256) NULL,
+    [VLD_FROM]        DATE           NULL,
+    [VLD_TO]          DATE           NULL,
+    [IS_CURR]         INT            NULL,
+    [IS_DMY]          INT            NULL,
+    [IS_EMBR]         INT            NULL,
+    [Hash]            NVARCHAR (256) NULL
+)
+WITH (CLUSTERED COLUMNSTORE INDEX, DISTRIBUTION = ROUND_ROBIN);

@@ -1,0 +1,1 @@
+﻿CREATE USER [Enterprise DaA - Azure Admin] FOR EXTERNAL PROVIDER;

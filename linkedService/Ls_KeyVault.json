@@ -1,0 +1,10 @@
+{
+	"name": "Ls_KeyVault",
+	"properties": {
+		"annotations": [],
+		"type": "AzureKeyVault",
+		"typeProperties": {
+			"baseUrl": "https://kv-np-ea2-edaa-etl-int.vault.azure.net/"
+		}
+	}
+}

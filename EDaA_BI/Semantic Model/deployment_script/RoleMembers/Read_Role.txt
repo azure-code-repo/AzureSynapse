@@ -1,0 +1,46 @@
+{
+  "createOrReplace": {
+    "object": {
+      "database": "Performance Brief Daily",
+      "role": "Daily Perf Brief Read "
+    },
+    "role": {
+      "name": "Daily Perf Brief Read ",
+      "modelPermission": "read",
+      "members": [
+        {
+          "memberName": "obj:4818d2d4-b2f8-454f-9795-215f1b1f1b8a@9b415222-16dc-4250-bd60-8a375591609a",
+          "identityProvider": "AzureAD"
+        },
+        {
+          "memberName": "obj:a20982c6-3999-4086-b719-f0c26f04bfa4@9b415222-16dc-4250-bd60-8a375591609a",
+          "identityProvider": "AzureAD"
+        },
+        {
+          "memberName": "obj:57695561-103c-4dcc-b6ca-1b5517d14770@9b415222-16dc-4250-bd60-8a375591609a",
+          "identityProvider": "AzureAD"
+        },
+        {
+          "memberName": "obj:9c1e71ab-9cbe-4502-b3cc-0afabff96c9c@9b415222-16dc-4250-bd60-8a375591609a",
+          "identityProvider": "AzureAD"
+        },
+        {
+          "memberName": "obj:9b087fa5-4a21-46b4-8f01-8f78a1f051a6@9b415222-16dc-4250-bd60-8a375591609a",
+          "identityProvider": "AzureAD"
+        },
+        {
+          "memberName": "obj:62f4055f-4a6b-440e-bce0-8602ec8bea0b@9b415222-16dc-4250-bd60-8a375591609a",
+          "identityProvider": "AzureAD"
+        },
+        {
+          "memberName": "obj:9fd1d9f3-24ef-4833-93c8-452b6ad331c4@9b415222-16dc-4250-bd60-8a375591609a",
+          "identityProvider": "AzureAD"
+        },
+        {
+          "memberName": "obj:8161b9c9-ead1-478a-88e4-077a86239e04@9b415222-16dc-4250-bd60-8a375591609a",
+          "identityProvider": "AzureAD"
+        }
+      ]
+    }
+  }
+}

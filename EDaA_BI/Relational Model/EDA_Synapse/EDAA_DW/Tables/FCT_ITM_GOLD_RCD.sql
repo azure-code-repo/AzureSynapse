@@ -1,0 +1,28 @@
+CREATE TABLE [EDAA_DW].[FCT_ITM_GOLD_RCD]
+(
+	[Prod_Hist_Sk] [bigint] NOT NULL,
+	[ITM_SKU_ID] [varchar](20) NOT NULL,
+	[PROD_ID] [varchar](10) NOT NULL,
+	[GOLD_RCD_ID] [varchar](128) NOT NULL,
+	[CNTN_LED_IND] [varchar](128) NULL,
+	[SUST_CERT_ID] [int] NULL,
+	[PROD_SIZ_RNG_SUB_TYP_ID] [int] NULL,
+	[PROD_SIZ_RNG_CD_ID] [int] NULL,
+	[SUST_CERT] [varchar](5000) NULL,
+	[THD_CNT] [int] NULL,
+	[NBR_OF_PCE_CNT] [int] NULL,
+	[FTWR_PROD_TGT_GENDR_ID] [int] NULL,
+	[UDT_TMS] [datetime] NOT NULL,
+	[UDT_BY] [varchar](256) NOT NULL,
+	[AUD_INS_SK] [bigint] NULL,
+	[AUD_UPD_SK] [bigint] NULL,
+ CONSTRAINT [PK_FCT_ITM_GOLD_RCD] PRIMARY KEY NONCLUSTERED
+	(
+		[Prod_Hist_Sk] ASC
+	) NOT ENFORCED
+)
+WITH
+(
+	DISTRIBUTION = HASH ( [PROD_ID] ),
+	CLUSTERED COLUMNSTORE INDEX
+)

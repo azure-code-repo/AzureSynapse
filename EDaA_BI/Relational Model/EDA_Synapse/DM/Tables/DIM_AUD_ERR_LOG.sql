@@ -1,0 +1,8 @@
+﻿CREATE TABLE [DM].[DIM_AUD_ERR_LOG] (
+    [AUD_SKY]     BIGINT         NULL,
+    [ERR_DT]      DATETIME       NOT NULL,
+    [ERR_PROC_NM] VARCHAR (500)  NULL,
+    [ERR_LN]      INT            NULL,
+    [ERR_MSG]     NVARCHAR (MAX) NULL
+)
+WITH (HEAP, DISTRIBUTION = ROUND_ROBIN);

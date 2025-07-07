@@ -1,0 +1,14 @@
+﻿CREATE TABLE [EDAA_STG].[FCT_HRLY_ITMSKU_SLS]
+(
+	[STO_POS_BUS_DT] [date] NULL,
+	[UPC_ID] [decimal](18, 0) NULL,
+	[UT_ID] [int] NULL,
+	[UPC_PTS_AM] [decimal](11, 2) NULL,
+	[UPC_PTS_QT] [decimal](9, 0) NULL,
+	[UPC_PTS_DMGN_AM] [decimal](11, 4) NULL
+)
+WITH
+(
+	DISTRIBUTION = ROUND_ROBIN,
+	CLUSTERED COLUMNSTORE INDEX
+)

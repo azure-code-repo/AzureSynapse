@@ -1,0 +1,318 @@
+/****** Object:  StoredProcedure [ETL].[TIME_DIMENSION]    Script Date: 9/9/2020 7:35:49 AM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROC [ETL].[TIME_DIMENSION] @StartDate [datetime],@NumOfYRS [INT],@schema_name [varchar](100) AS
+BEGIN
+
+  BEGIN
+
+/* CREATING TRANSACTION TABLE FOR CAPTURING THE DATES */
+	create table #dates (dt datetime);
+
+	DECLARE @dateTo datetime;
+	SET @dateTo = DATEADD(DAY, -1, DATEADD(YEAR, @NumOfYRS, @StartDate));
+	-- Query:
+	INSERT INTO #dates
+	SELECT @StartDate;
+
+	WHILE(@StartDate < @dateTo)
+	BEGIN
+	   SELECT @StartDate = DATEADD(day, 1,@StartDate)
+	   INSERT INTO #dates
+	   SELECT @StartDate
+	END
+	END
+	BEGIN
+		with src AS
+		(
+		  SELECT
+			DAY_DT = CONVERT(date, DT),
+			DAY_DT_LY=DATEADD(day,-364,DT),
+			WK_END_DT=DATEADD(day,7-datepart(weekday,DT),cast(DT as date)),
+			WK_END_DT_LY=DAtEADD(day,-364,DATEADD(DAY,7-datepart(weekday,DT),cast(DT as date))),
+			CLDR_DAY_OF_WK_ID= DATEPART(WEEKDAY,DT),
+			CLDR_DAY_OF_WK_NM= DATENAME(WEEKDAY,DT),
+			CLDR_DAY_OF_MTH_ID= DATEPART(DAY,DT),
+			CLDR_DAY_OF_YR_ID= DATEPART(DAYOFYEAR,DT),
+			CLDR_MTH_OF_YR_ID= DATEPART(MONTH,DT),
+			CLDR_MTH_OF_YR_NM= DATENAME(MONTH,DT),
+			CLDR_YR_ID = DATEPART(YEAR,DT),
+			FCL_DAY_OF_WK_ID= DATEPART(WEEKDAY,DT),
+			CLDR_WK_OF_YR_ID=case when DATENAME(WEEKDAY,cast('01/01/'+cast(DATEPART(YEAR,cast(DT as date)) as varchar) as date))='Sunday'
+									Then DATEPART(WEEK,cast(DT as date))
+									else DATEPART(WEEK,cast(DT as date))-1
+							END
+			  FROM #dates
+		)
+		SELECT *,ROW_NUMBER() over (order by DAY_DT) as DAY_OF_CALENDAR into #BASECALENDAR FROM src;
+	END
+------------------------------------------------------------
+	BEGIN
+
+		SELECT DAY_OF_CALENDAR as FCL_DAY_OF_YR_ID,
+			 CASE WHEN DAY_OF_CALENDAR <= 112 THEN DAY_OF_CALENDAR
+				  WHEN DAY_OF_CALENDAR BETWEEN 113 AND 196 THEN DAY_OF_CALENDAR - 112
+				  WHEN DAY_OF_CALENDAR BETWEEN 197 AND 280 THEN DAY_OF_CALENDAR - 196
+				  WHEN DAY_OF_CALENDAR >= 281 THEN DAY_OF_CALENDAR - 280
+				  ELSE 0
+			 END as FCL_DAY_OF_QTR_ID,
+			 CASE WHEN DAY_OF_CALENDAR <= 364
+				  THEN ( ( DAY_OF_CALENDAR - 1 )% 28 ) + 1
+				  ELSE DAY_OF_CALENDAR - 336
+			 END as  FCL_DAY_OF_PER_ID ,
+			 ( DAY_OF_CALENDAR - 1 ) % 7 + 1 as FCL_DAY_OF_WK_ID,
+			 ( DAY_OF_CALENDAR - 1 ) / 7 + 1 as FCL_WK_OF_YR_ID,
+			 CASE WHEN DAY_OF_CALENDAR <= 112 THEN ( DAY_OF_CALENDAR - 1 ) / 7 + 1
+				  WHEN DAY_OF_CALENDAR BETWEEN 113 AND 196 THEN ( DAY_OF_CALENDAR - 113 ) / 7 + 1
+				  WHEN DAY_OF_CALENDAR BETWEEN 197 AND 280 THEN ( DAY_OF_CALENDAR - 197 ) / 7 + 1
+				  WHEN DAY_OF_CALENDAR >= 281 THEN ( DAY_OF_CALENDAR - 281 ) / 7 + 1
+				  ELSE 0
+			 END as FCL_WK_OF_QTR_ID,
+			 CASE WHEN DAY_OF_CALENDAR <= 364 THEN ( ( DAY_OF_CALENDAR - 1 ) % 28 ) / 7 + 1
+				  WHEN DAY_OF_CALENDAR > 364 THEN 5
+				  ELSE 0
+				  END as FCL_WK_OF_PER_ID,
+			 CASE WHEN DAY_OF_CALENDAR <= 364 THEN ( DAY_OF_CALENDAR - 1 ) / 28 + 1
+				  WHEN DAY_OF_CALENDAR > 364 THEN 13
+				  ELSE 0
+				  END as FCL_PER_OF_YR_ID,
+			 CASE WHEN DAY_OF_CALENDAR <= 112 THEN ( DAY_OF_CALENDAR - 1 ) / 28 + 1
+				  WHEN DAY_OF_CALENDAR BETWEEN 113 AND 196 THEN ( DAY_OF_CALENDAR - 113 ) / 28 + 1
+				  WHEN DAY_OF_CALENDAR BETWEEN 197 AND 280 THEN ( DAY_OF_CALENDAR - 197 ) / 28 + 1
+				  WHEN DAY_OF_CALENDAR BETWEEN 281 AND 364 THEN ( DAY_OF_CALENDAR - 281 ) / 28 + 1
+				  WHEN DAY_OF_CALENDAR BETWEEN 365 AND 371 THEN 3
+				  ELSE 0
+			 END as FCL_PER_OF_QTR_ID,
+			 CASE WHEN DAY_OF_CALENDAR <= 112 THEN 1
+				  WHEN DAY_OF_CALENDAR BETWEEN 113 AND 196 THEN 2
+				  WHEN DAY_OF_CALENDAR BETWEEN 197 AND 280 THEN 3
+				  WHEN DAY_OF_CALENDAR >= 281 THEN 4
+				  ELSE 0
+			 END as FCL_QTR_OF_YR_ID
+			 into #COMN_ATTR
+		 FROM #BASECALENDAR
+		 WHERE DAY_OF_CALENDAR BETWEEN 1 AND 371;
+
+	END
+
+
+	BEGIN
+		  select distinct CLDR_YR_ID as FCL_YR_ID,371 as FCL_YR_DAY_CT into #MJR_FCL_YR
+		   from #BASECALENDAR
+			where CLDR_MTH_OF_YR_ID=12
+			and CLDR_DAY_OF_MTH_ID in (30,31)
+			and CLDR_DAY_OF_WK_ID=1
+			and CLDR_YR_ID -1 not in (
+						select CLDR_YR_ID from #BASECALENDAR
+										  where CLDR_MTH_OF_YR_ID = 12
+										  and CLDR_DAY_OF_MTH_ID in (30,31)
+										  and CLDR_DAY_OF_WK_ID=1);
+
+
+			 Insert into #MJR_FCL_YR
+				select distinct CLDR_YR_ID as FCL_YR_ID, 364 as FCL_YR_DAY_CT
+				from #BASECALENDAR
+				 where CLDR_YR_ID not in (select FCL_YR_ID from #MJR_FCL_YR);
+	END
+
+
+	BEGIN		SELECT
+			C.FCL_YR_ID,
+			C.FCL_YR_DAY_CT,
+			cast('9999/01/01' as date) as FCL_YR_BEGN_DT,
+			cast('9999/01/01' as date) as FCL_YR_END_DT,
+			FCL_YR_BEGN.FCL_YR_BEGN_REL_DAY_OF_CLDR			INTO #DAN_MJR_FCL_YR_INF
+			FROM  #MJR_FCL_YR C,
+					(SELECT B.FCL_YR_ID, ISNULL(SUM(A.FCL_YR_DAY_CT),0) + 1
+							FROM #MJR_FCL_YR B LEFT OUTER JOIN #MJR_FCL_YR A
+							ON B.FCL_YR_ID > A.FCL_YR_ID
+							GROUP BY B.FCL_YR_ID) FCL_YR_BEGN (FCL_YR_ID, FCL_YR_BEGN_REL_DAY_OF_CLDR)
+			WHERE C.FCL_YR_ID = FCL_YR_BEGN.FCL_YR_ID;
+
+
+	--select dateadd(day,(tab2.FCL_YR_BEGN_REL_DAY_OF_CLDR - 1),(select min(day_dt) from #BASECALENDAR)) from #DAN_MJR_FCL_YR_INF tab2
+
+
+			UPDATE tab1
+			SET FCL_YR_BEGN_DT = dateadd(day,(tab2.FCL_YR_BEGN_REL_DAY_OF_CLDR - 1),(select min(day_dt) from #BASECALENDAR)) ,
+				FCL_YR_END_DT = cast(dateadd(day,( tab2.FCL_YR_DAY_CT - 1 ),dateadd(day,(tab2.FCL_YR_BEGN_REL_DAY_OF_CLDR - 1),(select min(day_dt) from #BASECALENDAR))) as date)
+			from #DAN_MJR_FCL_YR_INF tab1 join #DAN_MJR_FCL_YR_INF tab2
+			on tab1.FCL_YR_ID=tab2.FCL_YR_ID
+			and tab1.FCL_YR_DAY_CT=tab2.FCL_YR_DAY_CT;
+
+	END
+	--drop table #MJR_FCL_PER;
+
+	BEGIN		SELECT distinct FY.FCL_YR_ID,
+					SC.CLDR_DAY_OF_YR_ID as FCL_PER_ID,
+					CASE WHEN ( SC.CLDR_DAY_OF_YR_ID = 13 AND FY.FCL_YR_DAY_CT = 371 )
+						 THEN 35
+						 ELSE 28
+					END as FCL_PER_DAY_CT,
+					dateadd(day,( ( SC.CLDR_DAY_OF_YR_ID - 1 ) * 28 ),FY.FCL_YR_BEGN_DT) as FCL_PER_BEGN_DT,
+					CASE WHEN ( SC.CLDR_DAY_OF_YR_ID = 13 )
+						 THEN FY.FCL_YR_END_DT
+						 ELSE dateadd(day, ( SC.CLDR_DAY_OF_YR_ID * 28 ) - 1,FY.FCL_YR_BEGN_DT)
+					END as FCL_PER_END_DT,
+					FY.FCL_YR_BEGN_REL_DAY_OF_CLDR + ( ( SC.CLDR_DAY_OF_YR_ID - 1 ) * 28 ) as FCL_PER_BEGN_REL_DAY_OF_CLDR  into #MJR_FCL_PER
+			FROM  #BASECALENDAR SC,#DAN_MJR_FCL_YR_INF FY
+			WHERE SC.CLDR_DAY_OF_YR_ID BETWEEN 1 AND 13 ;
+	END
+
+	BEGIN
+
+			  SELECT
+				FCL_YR_ID + 1 as FCL_YR_ID,
+				FCL_PER_ID,
+				FCL_PER_DAY_CT as FCL_PER_DAY_CT_LY,
+				FCL_PER_BEGN_DT as FCL_PER_BEGN_DT_LY,
+				FCL_PER_END_DT  as FCL_PER_END_DT_LY
+			into #MJR_FCL_PER_LY
+			FROM #MJR_FCL_PER;
+
+			 insert into #MJR_FCL_PER_LY
+					SELECT FCL_YR_ID,FCL_PER_ID,
+						   28 as FCL_PER_DAY_CT_LY,
+						   DATEADD(DAY, - 364,FCL_PER_BEGN_DT ) as FCL_PER_BEGN_DT_LY,
+							CASE WHEN FCL_PER_ID < 13
+								 THEN DATEADD(DAY,-364,FCL_PER_END_DT)
+								 ELSE DATEADD(DAY,-371,FCL_PER_END_DT)
+							END  as FCL_PER_END_DT_LY
+					FROM #MJR_FCL_PER
+					WHERE FCL_YR_ID in (select min(CLDR_YR_ID) from #BASECALENDAR);
+	END
+
+	BEGIN
+
+			SELECT distinct  FY.FCL_YR_ID as FCL_YR_ID,
+							 SC.CLDR_DAY_OF_MTH_ID as FCL_QTR_ID,
+							 CASE WHEN SC.CLDR_DAY_OF_MTH_ID = 1 THEN FY.FCL_YR_BEGN_DT
+								  WHEN SC.CLDR_DAY_OF_MTH_ID = 2 THEN dateadd(day,112,FY.FCL_YR_BEGN_DT)
+								  WHEN SC.CLDR_DAY_OF_MTH_ID = 3 THEN dateadd(day,196,FY.FCL_YR_BEGN_DT)
+								  WHEN SC.CLDR_DAY_OF_MTH_ID = 4 THEN dateadd(day,280,FY.FCL_YR_BEGN_DT)
+							END as FCL_QTR_BEGN_DT,
+							CASE WHEN SC.CLDR_DAY_OF_MTH_ID = 1 THEN dateadd(day,111,FY.FCL_YR_BEGN_DT)
+								 WHEN SC.CLDR_DAY_OF_MTH_ID = 2 THEN dateadd(day,195,FY.FCL_YR_BEGN_DT)
+								 WHEN SC.CLDR_DAY_OF_MTH_ID = 3 THEN dateadd(day,279,FY.FCL_YR_BEGN_DT)
+								 WHEN SC.CLDR_DAY_OF_MTH_ID = 4 THEN FY.FCL_YR_END_DT
+							END  as FCL_QTR_END_DT
+			 into #MJR_FCL_QTR
+			 FROM #BASECALENDAR SC,#DAN_MJR_FCL_YR_INF FY
+			 WHERE SC.CLDR_DAY_OF_YR_ID BETWEEN 1 AND 4 ;
+	END
+
+	BEGIN
+
+		 SELECT distinct
+			SC.DAY_DT as DAY_DT,
+			SC.CLDR_DAY_OF_YR_ID as CALENDAR_DAY_OF_YEAR,
+			SC.CLDR_DAY_OF_WK_ID as FCL_DAY_OF_WK_ID,
+			ATTR.FCL_DAY_OF_PER_ID as FCL_DAY_OF_PER_ID,
+			ATTR.FCL_DAY_OF_QTR_ID as FCL_DAY_OF_QTR_ID,
+			ATTR.FCL_DAY_OF_YR_ID as FCL_DAY_OF_YR_ID,
+			ATTR.FCL_WK_OF_PER_ID as FCL_WK_OF_PER_ID,
+			ATTR.FCL_WK_OF_QTR_ID as FCL_WK_OF_QTR_ID,
+			ATTR.FCL_WK_OF_YR_ID as FCL_WK_OF_YR_ID,
+			ATTR.FCL_PER_OF_QTR_ID as FCL_PER_OF_QTR_ID,
+			ATTR.FCL_PER_OF_YR_ID as FCL_PER_OF_YR_ID,
+			ATTR.FCL_PER_OF_YR_ID as FCL_PER_OF_YR_LY_ID,
+			FP.FCL_PER_BEGN_DT as FCL_PER_BEGN_DT,
+			FP.FCL_PER_END_DT as FCL_PER_END_DT,
+			FPLY.FCL_PER_BEGN_DT_LY as FCL_PER_BEGN_DT_LY,
+			FPLY.FCL_PER_END_DT_LY as FCL_PER_END_DT_LY,
+			(FY.FCL_YR_ID * 13 ) + ATTR.FCL_PER_OF_YR_ID - 1 as FCL_PER_SEQ_ID,
+			ATTR.FCL_QTR_OF_YR_ID as FCL_QTR_OF_YR_ID,
+			FQ.FCL_QTR_BEGN_DT as FCL_QTR_BEGN_DT,
+			FQ.FCL_QTR_END_DT as FCL_QTR_END_DT,
+			( FQ.FCL_YR_ID * 4 ) + ATTR.FCL_QTR_OF_YR_ID - 1 as FCL_QTR_SEQ_ID,
+			FY.FCL_YR_ID as FCL_YR_ID,
+			FY.FCL_YR_ID - 1 as FCL_YR_LY_ID,
+			FY.FCL_YR_BEGN_DT as FCL_YR_BEGN_DT,
+			FY.FCL_YR_END_DT as FCL_YR_END_DT
+		 into #DAN_FCL_DT_INF
+		 FROM #BASECALENDAR SC,
+			#COMN_ATTR ATTR,
+			#DAN_MJR_FCL_YR_INF FY,
+			#MJR_FCL_QTR FQ,
+			#MJR_FCL_PER FP,
+			#MJR_FCL_PER_LY FPLY
+		 WHERE SC.DAY_DT BETWEEN FY.FCL_YR_BEGN_DT AND FY.FCL_YR_END_DT
+		 AND SC.DAY_DT = dateadd(day,-1,DATEADD(DAY, ATTR.FCL_DAY_OF_YR_ID,FY.FCL_YR_BEGN_DT ))
+		 AND FY.FCL_YR_ID = FQ.FCL_YR_ID
+		 AND ATTR.FCL_QTR_OF_YR_ID = FQ.FCL_QTR_ID
+		 AND FY.FCL_YR_ID = FP.FCL_YR_ID
+		 AND ATTR.FCL_PER_OF_YR_ID = FP.FCL_PER_ID
+		 AND FP.FCL_YR_ID = FPLY.FCL_YR_ID
+		 AND FP.FCL_PER_ID = FPLY.FCL_PER_ID;
+	END
+
+	BEGIN
+
+		 SELECT
+			  A.DAY_DT ,
+			  A.DAY_DT_LY ,
+			  dateadd(day,B.FCL_DAY_OF_PER_ID-1,B.FCL_PER_BEGN_DT_LY) as FCL_DAY_DT_LY,
+			  A.WK_END_DT ,
+			  A.WK_END_DT_LY ,
+			   DATEADD(day,7-datepart(weekday,dateadd(day,B.FCL_DAY_OF_PER_ID-1,B.FCL_PER_BEGN_DT_LY)),cast(dateadd(day,B.FCL_DAY_OF_PER_ID-1,B.FCL_PER_BEGN_DT_LY) as date)) as FCL_WK_END_DT_LY,
+			  A.CLDR_DAY_OF_WK_ID ,
+			  A.CLDR_DAY_OF_WK_NM ,
+			  SUBSTRING(A.CLDR_DAY_OF_WK_NM,1,3)  as CLDR_DAY_OF_WK_SHRT_NM,
+			  A.CLDR_DAY_OF_MTH_ID ,
+			  A.CLDR_DAY_OF_YR_ID ,
+			  A.CLDR_WK_OF_YR_ID ,
+			  A.CLDR_MTH_OF_YR_ID,
+			  A.CLDR_MTH_OF_YR_NM,
+			  SUBSTRING(A.CLDR_MTH_OF_YR_NM,1,3)  as CLDR_MTH_OF_YR_SHRT_NM,
+			  A.CLDR_YR_ID ,
+			  B.FCL_DAY_OF_WK_ID ,
+			  B.FCL_DAY_OF_PER_ID ,
+			  B.FCL_DAY_OF_QTR_ID ,
+			  B.FCL_DAY_OF_YR_ID  ,
+			  B.FCL_WK_OF_PER_ID  ,
+			  B.FCL_WK_OF_QTR_ID  ,
+			  B.FCL_WK_OF_YR_ID  ,
+			  B.FCL_PER_OF_QTR_ID  ,
+			  B.FCL_PER_OF_YR_ID  ,
+			  B.FCL_PER_OF_YR_LY_ID  ,
+			  B.FCL_PER_BEGN_DT ,
+			  B.FCL_PER_END_DT ,
+			  B.FCL_PER_BEGN_DT_LY ,
+			  B.FCL_PER_END_DT_LY ,
+			  B.FCL_PER_SEQ_ID ,
+			  B.FCL_QTR_OF_YR_ID  ,
+			  B.FCL_QTR_BEGN_DT,
+			  B.FCL_QTR_END_DT,
+			  B.FCL_QTR_SEQ_ID ,
+			  B.FCL_YR_ID ,
+			  B.FCL_YR_LY_ID ,
+			  B.FCL_YR_BEGN_DT ,
+			  B.FCL_YR_END_DT,
+			  cast(datediff(day,'1/1/1900',A.DAY_DT) as int)+1 as TERADATA_DAY_OF_CLDR
+			  into #MSTR_CLDR_INF
+		 FROM #BASECALENDAR A,#DAN_FCL_DT_INF B
+		 WHERE A.DAY_DT = B.DAY_DT;
+	END
+
+
+	BEGIN
+
+			DECLARE @delete_statement nvarchar(max);
+			SET @delete_statement = N'delete from ' + @schema_name + '.' + 'DT_INF where day_dt < (SELECT DATEADD(year,-25,GETDATE()));  '
+			EXEC  (@delete_statement)
+
+			DECLARE @insert_statement nvarchar(max);
+			SET @insert_statement=N'INSERT INTO ' + @schema_name + '.' + 'DT_INF  '
+			DECLARE @sql_statement nvarchar(max);
+			SET @sql_statement=N'select * from #MSTR_CLDR_INF where DAY_DT not in (select distinct DAY_DT from ' + @schema_name + '.' + 'DT_INF)';
+			EXEC  (@insert_statement + @sql_statement)
+
+	END
+
+END
+
+GO

@@ -1,0 +1,18 @@
+﻿CREATE TABLE [EDAA_STG].[UT_UPC_DLY_INV_TN_DTL_HST_TEMP]
+(
+	[PROD_HIST_SK] [bigint] NOT NULL,
+	[GEO_HIST_SK] [int] NOT NULL,
+	[ITM_SKU] [decimal](18, 0) NULL,
+	[DT_SK] [int] NULL,
+	[INV_ADJ_SK] [int] NOT NULL,
+	[STR_ID] [smallint] NULL,
+	[INV_ADJSTD_QTY] [decimal](11, 2) NULL,
+	[INV_ADJSTD_AMT] [decimal](17, 4) NULL,
+	[AUD_INS_SK] [bigint] NULL,
+	[AUD_UPD_SK] [int] NULL
+)
+WITH
+(
+	DISTRIBUTION = ROUND_ROBIN,
+	CLUSTERED COLUMNSTORE INDEX
+)

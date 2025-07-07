@@ -1,0 +1,61 @@
+CREATE TABLE [EDAA_STG].[FCT_DLY_PYMT_TNR]
+(
+	[STR_ID] [int] NOT NULL,
+	[STR_BRND_NM] [nvarchar](50) NULL,
+	[DT_SK] [int] NOT NULL,
+	[STR_TXN_DT] [date] NOT NULL,
+	[FSC_YR_ID] [int] NOT NULL,
+	[FSC_QTR_NM] [nvarchar](5) NOT NULL,
+	[FSC_QTR_SEQ_ID] [int] NULL,
+	[FSC_PRD_NM] [nvarchar](6) NOT NULL,
+	[FSC_PRD_SEQ_ID] [int] NULL,
+	[TXN_TYP_NM] [nvarchar](20) NOT NULL,
+	[WLT_TYP_DESC] [nvarchar](30) NULL,
+	[TXN_STS_DESC] [nvarchar](10) NOT NULL,
+	[TEND_TYP_NM] [nvarchar](20) NOT NULL,
+	[CRD_TYP_DESC] [nvarchar](25) NOT NULL,
+	[CRD_SUB_TYP_DESC] [nvarchar](20) NULL,
+	[RSP_MSG_TXT] [nvarchar](256) NULL,
+	[TXN_CNT] [int] NOT NULL,
+	[APPR_AMT] [decimal](9, 2) NOT NULL,
+	[PIN_RCVD_TXT] [nvarchar](3) NULL,
+	[ISUR_BNK_NM] [nvarchar](60) NULL,
+	[POS_REG_NBR_ID] [nvarchar](25) NULL,
+	[OMNI_CHL_IND] [tinyint] NULL,
+	[VOD_RVS_DESC] [nvarchar](55) NULL,
+	[STR_TYP_NM] [nvarchar](20) NOT NULL,
+	[TXN_TY_CNT] [bigint] NOT NULL,
+	[TXN_LY_CNT] [bigint] NOT NULL,
+	[TXN_TY_AMT] [decimal](9, 2) NOT NULL,
+	[TXN_LY_AMT] [decimal](9, 2) NOT NULL,
+CONSTRAINT [PK_FCT_DLY_PYMT_TNR] UNIQUE NONCLUSTERED
+	(
+		[STR_ID] ASC,
+		[STR_BRND_NM] ASC,
+		[DT_SK] ASC,
+		[STR_TXN_DT] ASC,
+		[FSC_YR_ID] ASC,
+		[FSC_QTR_NM] ASC,
+		[FSC_QTR_SEQ_ID] ASC,
+		[FSC_PRD_NM] ASC,
+		[FSC_PRD_SEQ_ID] ASC,
+		[TXN_TYP_NM] ASC,
+		[WLT_TYP_DESC] ASC,
+		[TXN_STS_DESC] ASC,
+		[TEND_TYP_NM] ASC,
+		[CRD_TYP_DESC] ASC,
+		[CRD_SUB_TYP_DESC] ASC,
+		[RSP_MSG_TXT] ASC,
+		[PIN_RCVD_TXT] ASC,
+		[ISUR_BNK_NM] ASC,
+		[POS_REG_NBR_ID] ASC,
+		[OMNI_CHL_IND] ASC,
+		[VOD_RVS_DESC] ASC,
+		[STR_TYP_NM] ASC
+	) NOT ENFORCED
+)
+WITH
+(
+	DISTRIBUTION = ROUND_ROBIN,
+	CLUSTERED COLUMNSTORE INDEX
+)

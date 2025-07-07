@@ -1,0 +1,46 @@
+﻿CREATE TABLE [EDAA_STG].[FCT_PROMO_BLK_P_SGRP_HST]
+(
+	[PROMO_BLK_ID] [int] NULL,
+	[P_GRP_ID] [int] NULL,
+	[P_SGRP_ID] [int] NULL,
+	[P_SGRP_SHRT_DSC_TX] [nvarchar](4000) NULL,
+	[P_SGRP_NTE_TX] [nvarchar](4000) NULL,
+	[FCST_VDR_LUMP_SUM_AM] [decimal](11, 4) NULL,
+	[FCST_PROMO_VDR_ALW_AM] [decimal](11, 4) NULL,
+	[FCST_T_SL_QT] [decimal](9, 2) NULL,
+	[FCST_T_SL_AM] [decimal](14, 4) NULL,
+	[FCST_T_DMGN_AM] [decimal](14, 4) NULL,
+	[FCST_AVG_CST_AM] [decimal](9, 2) NULL,
+	[FCST_AVG_SL_QT] [decimal](9, 2) NULL,
+	[FCST_UT_QT] [int] NULL,
+	[FCST_P_UPC_QT] [int] NULL,
+	[UT_QT] [int] NULL,
+	[P_UPC_QT] [decimal](9, 2) NULL,
+	[PROMO_T_SL_QT] [decimal](9, 2) NULL,
+	[PROMO_T_SL_AM] [decimal](9, 2) NULL,
+	[PROMO_T_DMGN_AM] [decimal](9, 2) NULL,
+	[PROMO_AVG_RTL_AM] [decimal](9, 2) NULL,
+	[PROMO_MIN_RTL_AM] [decimal](9, 2) NULL,
+	[PROMO_MAX_RTL_AM] [decimal](9, 2) NULL,
+	[AVG_REG_RTL_AM] [decimal](9, 2) NULL,
+	[AVG_CST_AM] [decimal](9, 2) NULL,
+	[RWB_FCST_T_SL_QT] [decimal](9, 2) NULL,
+	[RWB_FCST_BSLN_SL_QT] [decimal](9, 2) NULL,
+	[TG_LOST_SL_QT] [decimal](9, 2) NULL,
+	[TG_BGN_INV_QT] [int] NULL,
+	[TG_END_INV_QT] [int] NULL,
+	[INCRMNTL_T_SL_QT] [decimal](9, 2) NULL,
+	[INCRMNTL_T_SL_AM] [decimal](14, 4) NULL,
+	[INCRMNTL_T_DMGN_AM] [decimal](14, 4) NULL,
+	[TG_PTS_QT] [int] NULL,
+	[TG_PTS_AM] [decimal](14, 2) NULL,
+	[TG_PTS_DMGN_AM] [decimal](14, 2) NULL,
+	[TG_CLRN_QT] [int] NULL,
+	[TG_CLRN_AM] [decimal](9, 2) NULL,
+	[TG_CLRN_DMGN_AM] [decimal](9, 2) NULL
+)
+WITH
+(
+	DISTRIBUTION = ROUND_ROBIN,
+	CLUSTERED COLUMNSTORE INDEX
+)

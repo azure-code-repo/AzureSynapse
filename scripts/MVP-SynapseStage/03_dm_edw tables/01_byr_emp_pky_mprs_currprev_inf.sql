@@ -1,0 +1,78 @@
+/****** Object:  Table [dm_edw].[BYR_EMP_PKY_MPRS_CURRPREV_INF]    Script Date: 9/9/2020 1:09:27 AM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE TABLE [dm_edw].[BYR_EMP_PKY_MPRS_CURRPREV_INF]
+(
+	[INS_DT] [datetime] NULL,
+	[CURR_PKY_ID] [int] NULL,
+	[PKY_DSC] [varchar](200) NULL,
+	[CURR_MPRS_CT_ID] [int] NULL,
+	[MPRS_CT_DSC] [varchar](200) NULL,
+	[PKY_ID] [int] NULL,
+	[MPRS_CT_ID] [int] NULL,
+	[BYR_ID] [int] NULL,
+	[MJR_P_SUB_CT_ID] [varchar](200) NULL,
+	[EMP_ID] [int] NULL,
+	[MGR_EMP_ID] [int] NULL,
+	[RPLNR_EMP_ID] [int] NULL,
+	[RPLNR_SPVR_EMP_ID] [int] NULL,
+	[MGR_ID] [int] NULL,
+	[MPRS_CT_PLN_FLG] [varchar](200) NULL,
+	[PA_EMP_ID] [int] NULL,
+	[PA_TLDR_EMP_ID] [int] NULL,
+	[PR_SPCLT_EMP_ID] [int] NULL,
+	[PR_TLDR_EMP_ID] [int] NULL,
+	[PROMO_EMP_ID] [int] NULL,
+	[PROMO_TLDR_EMP_ID] [int] NULL,
+	[FNCPL_EMP_ID] [int] NULL,
+	[FNCPL_MGR_EMP_ID] [int] NULL,
+	[VFA_EMP_ID] [int] NULL,
+	[VFA_TLDR_EMP_ID] [int] NULL,
+	[LYOUT_SPCLT_EMP_ID] [int] NULL,
+	[LYOUT_TLDR_EMP_ID] [int] NULL,
+	[MDS_DSTB_EMP_ID] [int] NULL,
+	[EDI_ADMN_EMP_ID] [int] NULL,
+	[EDI_ANLY_EMP_ID] [int] NULL,
+	[VMS_SPCLT_EMP_ID] [int] NULL,
+	[VMS_TLDR_EMP_ID] [int] NULL,
+	[MDS_AS_EMP_ID] [int] NULL,
+	[MDSPL_EMP_ID] [int] NULL,
+	[MDSPL_MGR_EMP_ID] [int] NULL,
+	[MDS_ANLY_EMP_ID] [int] NULL,
+	[SPCPL_EMP_ID] [int] NULL,
+	[SPCPL_MGR_EMP_ID] [int] NULL,
+	[PROMO_CRDNT_EMP_ID] [int] NULL,
+	[PROMO_CRDNT_MGR_ID] [int] NULL,
+	[PR_CRDNT_EMP_ID] [int] NULL,
+	[PR_CRDNT_MGR_ID] [int] NULL,
+	[MDS_RORG_FLG] [varchar](200) NULL,
+	[ECOM_BYR_ID] [int] NULL,
+	[ECOM_BYR_EMP_ID] [int] NULL,
+	[ECOM_MGR_ID] [int] NULL,
+	[ECOM_MGR_EMP_ID] [int] NULL,
+	[ECOM_WVS_EMP_ID] [int] NULL,
+	[ECOM_WVS_MGR_EMP_ID] [int] NULL,
+	[ECOM_MDS_AS_EMP_ID] [int] NULL,
+	[ECOM_MDSPL_EMP_ID] [int] NULL,
+	[ECOM_MDSPL_MGR_ID] [int] NULL,
+	[ECOM_MDS_ANLY_ID] [int] NULL,
+	[MDS_AS_TRNE_EMP_ID] [int] NULL,
+	[INDV_FST_NM] [varchar](200) NULL,
+	[INDV_MID_NM] [varchar](200) NULL,
+	[INDV_LST_NM] [varchar](200) NULL,
+	[BYR_NM] [varchar](200) NULL,
+	[EDI_ADMN_TLDR_EMP_ID] [int] NULL,
+	[EDI_ANLY_TLDR_EMP_ID] [int] NULL,
+	[MJR_ALT_PHN_NBR] [varchar](200) NULL,
+	[BYR_DID_PHN_NBR] [varchar](200) NULL
+)
+WITH
+(
+	DISTRIBUTION = ROUND_ROBIN,
+	CLUSTERED COLUMNSTORE INDEX
+)
+GO
