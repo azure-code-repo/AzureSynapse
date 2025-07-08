@@ -1,8 +1,0 @@
-﻿CREATE TABLE [dm_edw].[HLDY_DT_XRF_INF] (
-    [DAY_DT]         DATE          NULL,
-    [LY_DAY_DT]      DATE          NULL,
-    [LY_FCL_DAY_DT]  DATE          NULL,
-    [LY_HLDY_DAY_DT] DATE          NULL,
-    [HLDY_DT_DSC]    VARCHAR (400) NULL
-)
-WITH (CLUSTERED COLUMNSTORE INDEX, DISTRIBUTION = ROUND_ROBIN);

@@ -1,8 +1,0 @@
-:r "C:\Users\3025999\Documents\Meijer\Synapse-CERT\IntegrationTest\Syn_IntTest_V1\Syn_IntTest\Syn_IntTest\03_dm_edw tables\01_byr_emp_pky_mprs_currprev_inf.sql"
-:r "C:\Users\3025999\Documents\Meijer\Synapse-CERT\IntegrationTest\Syn_IntTest_V1\Syn_IntTest\Syn_IntTest\03_dm_edw tables\02_dim_byr_p_sub_ct_tmp.sql"
-:r "C:\Users\3025999\Documents\Meijer\Synapse-CERT\IntegrationTest\Syn_IntTest_V1\Syn_IntTest\Syn_IntTest\03_dm_edw tables\03_dim_chnl_tmp.sql"
-:r "C:\Users\3025999\Documents\Meijer\Synapse-CERT\IntegrationTest\Syn_IntTest_V1\Syn_IntTest\Syn_IntTest\03_dm_edw tables\04_dim_geo_tmp.sql"
-:r "C:\Users\3025999\Documents\Meijer\Synapse-CERT\IntegrationTest\Syn_IntTest_V1\Syn_IntTest\Syn_IntTest\03_dm_edw tables\05_dim_p_tmp.sql"
-:r "C:\Users\3025999\Documents\Meijer\Synapse-CERT\IntegrationTest\Syn_IntTest_V1\Syn_IntTest\Syn_IntTest\03_dm_edw tables\06_dim_p_l3_tmp.sql"
-:r "C:\Users\3025999\Documents\Meijer\Synapse-CERT\IntegrationTest\Syn_IntTest_V1\Syn_IntTest\Syn_IntTest\03_dm_edw tables\07_dt_inf.sql"
-:r "C:\Users\3025999\Documents\Meijer\Synapse-CERT\IntegrationTest\Syn_IntTest_V1\Syn_IntTest\Syn_IntTest\03_dm_edw tables\08_hldy_dt_xrf_inf.sql"

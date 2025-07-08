@@ -1,2 +1,0 @@
-﻿CREATE SCHEMA [V_EDAA_DW]
-    AUTHORIZATION [dbo];

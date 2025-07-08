@@ -1,6 +1,0 @@
-﻿CREATE TABLE [EDAA_STG].[FCT_WKND_PKY_MPRK_ADJ] (
-    [Fnc_Lvl3_Pky_Id] VARCHAR (15)    NOT NULL,
-    [Dt_Sk]           INT             NOT NULL,
-    [Mprk_Adj_Prcntg] DECIMAL (11, 8) NULL
-)
-WITH (CLUSTERED COLUMNSTORE INDEX, DISTRIBUTION = HASH([Fnc_Lvl3_Pky_Id]));

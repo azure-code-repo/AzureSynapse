@@ -1,4 +1,0 @@
-﻿CREATE VIEW [EDAA_PRES].[V_PERF_BRF_DIM_TM_HRLY_BRDG]
-AS SELECT distinct [Dt_Tm_Hr]
-
-  FROM [EDAA_PRES].[Dim_Hrly_Cal_Calc];

@@ -328,6 +328,6 @@ ASALocalRun/
 
 # MFractors (Xamarin productivity tool) working folder
 .mfractor/
-/EDaA_BI/TabularProject1
-/EDaA_BI/Relational Model/EDA_Synapse/ETL/Tables
-/EDaA_BI/Relational Model/EDA_Synapse/ETL/Stored Procedures
+/Eda_etl_BI/TabularProject1
+/Eda_etl_BI/Relational Model/EDA_Synapse/ETL/Tables
+/Eda_etl_BI/Relational Model/EDA_Synapse/ETL/Stored Procedures
